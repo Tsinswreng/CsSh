@@ -61,5 +61,5 @@ var ProjectRoots = new[]{
 
 foreach (var ProjectRoot in ProjectRoots) {
 	foreach (var Project in Find("*.csproj", Under: ProjectRoot))
-		X(new("dotnet", ["sln", "add", Project]));
+		X($"dotnet sln add {Project}");
 }

@@ -10,25 +10,25 @@ var AgentsSkillsDir = Root + "/.agents/skills";
 var GitHubBaseUrl = "https://github.com/Tsinswreng";
 
 // 將一個技能倉庫同步到 .agents/skills。clone 與 pull 的失敗均中止單項模式。
-void SyncOne(str SkillName){
+void SyncOne(string SkillName){
 	var RepoName = "tsinswreng-" + SkillName;
 	var RepoDir = SkillsRepoDir + "/" + RepoName;
 	var RepoUrl = GitHubBaseUrl + "/skill-" + SkillName + ".git";
 
 	if (Exists(RepoDir)) {
 		Console.WriteLine("[pull] " + RepoName);
-		X(new("git", ["-C", RepoDir, "pull"]));
+		X($"git -C {RepoDir} pull");
 	}
 	else {
 		Console.WriteLine("[clone] " + RepoName + " <- " + RepoUrl);
-		X(new("git", ["clone", RepoUrl, RepoDir]));
+		X($"git clone {RepoUrl} {RepoDir}");
 	}
 
 	SyncSkillContent(RepoDir, RepoName);
 }
 
 // 用倉庫名定位其內層技能目錄，並覆蓋 .agents 中的舊副本。
-void SyncSkillContent(str RepoDir, str RepoName){
+void SyncSkillContent(string RepoDir, string RepoName){
 	var Source = RepoDir + "/" + RepoName;
 	var Destination = AgentsSkillsDir + "/" + RepoName;
 
@@ -60,7 +60,7 @@ else {
 			continue;
 
 		Console.WriteLine("[pull] " + RepoName);
-		var PullResult = TryX(new("git", ["-C", RepoDir, "pull"]));
+		var PullResult = TryX($"git -C {RepoDir} pull");
 		if (!PullResult.IsSuccess)
 			Console.WriteLine("[warn] pull failed for " + RepoName + ", continuing...");
 

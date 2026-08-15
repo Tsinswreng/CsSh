@@ -20,14 +20,9 @@ public static partial class Sh{
 	public static partial void Cd(str Path);
 
 	/// 执行一行命令，等价于脚本中的 `dotnet publish -c Release`。
-	/// Cssh 负责将 Command 解析为程序名和参数；非零退出码时抛出 CommandFailedException。
+	/// Cssh 负责将 Command 解析为程序名和参数，并支持双引号包裹含空格的参数；Cwd 指定子进程目录，为 null 时使用当前目录；非零退出码时抛出 CommandFailedException。
 	/// 此重载不启动 Bash、PowerShell 或 cmd，故不解释管道、重定向、变量展开、&& 等 shell 语法。
-	public static partial CommandResult X(str Command);
-
-	/// 执行命令并继承当前终端的输出。
-	/// 命令以非零退出码结束时抛出 CommandFailedException。
-	/// 当参数来自外部输入，或参数包含需要精确保留的引号时，使用此重载避免命令字符串解析。
-	public static partial CommandResult X(str Program, params str[] Arguments);
+	public static partial CommandResult X(str Command, str? Cwd = null);
 
 	/// 按完整命令描述执行命令。
 	/// 可通过 CommandSpec 指定子进程工作目录、临时环境变量和捕获输出模式；非零退出码会抛异常。
@@ -37,12 +32,8 @@ public static partial class Sh{
 	public static partial Task<CommandResult> X(CommandSpec Command, CT Ct);
 
 	/// 执行一行命令但不因非零退出码抛异常。
-	/// 命令字符串的解析规则与 X(string) 相同。
-	public static partial CommandResult TryX(str Command);
-
-	/// 执行命令但不因非零退出码抛异常。
-	/// 适合探测可选工具或将退出码作为正常分支处理的脚本。
-	public static partial CommandResult TryX(str Program, params str[] Arguments);
+	/// 命令字符串的解析规则与 X 相同；Cwd 指定子进程目录，为 null 时使用当前目录。
+	public static partial CommandResult TryX(str Command, str? Cwd = null);
 
 	/// 按完整命令描述执行命令但不因非零退出码抛异常。
 	public static partial CommandResult TryX(CommandSpec Command);
