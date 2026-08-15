@@ -25,6 +25,10 @@ public static partial class Sh{
 	/// Pattern 使用 .NET 的文件名 wildcard；Under 为 null 时从当前目录开始，Recursive 默认递归子目录。
 	public static partial IEnumerable<str> Find(str Pattern = "*", str? Under = null, bool Recursive = true);
 
+	/// 惰性枚举目录。
+	/// Under 为 null 时从当前目录开始；Recursive 为 false 时仅返回直接子目录。
+	public static partial IEnumerable<str> Dirs(str? Under = null, bool Recursive = false);
+
 	/// 以文本方式读取文件。
 	public static partial str Read(str Path, Encoding? Encoding = null);
 

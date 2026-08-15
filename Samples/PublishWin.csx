@@ -12,14 +12,12 @@ Rm("publishOld", Force: true);
 if (Exists("publish"))
 	Mv("publish", "publishOld");
 
-Run(
-	"dotnet", "publish",
-	"-c", "Release",
-	"-r", "win-x64",
+X(
+	"dotnet publish -c Release -r win-x64 " +
 	"-p:AllowMissingPrunePackageData=true");
 
 // 此命令只在根目錄執行，不需要為切換目錄建立或恢復 scope。
-Run(new("sh", ["./CpAssets.sh"]){Cwd = Root});
+X(new("sh", ["./CpAssets.sh"]){Cwd = Root});
 
 var ReleaseDir = "bin/Release/net10.0/win-x64";
 var PublishDir = "bin/Release/net10.0/win-x64/publish";
@@ -34,7 +32,7 @@ foreach (var Pdb in Find("*.pdb", Under: PublishNoPdbDir))
 // 壓縮檔暫存在來源目錄外，以免 tar 在掃描來源時把自身打進去。
 var ArchivePath = Root + "/Ngan.Dict/Ngan.Dict.Frontend/proj/Ngan.Dict.Windows/bin/Release/net10.0/win-x64/Ngan.Dict.Windows.tar.gz";
 Rm(ArchivePath, Force: true);
-Run(new("tar", ["-czf", ArchivePath, "."]){Cwd = PublishNoPdbDir});
+X(new("tar", ["-czf", ArchivePath, "."]){Cwd = PublishNoPdbDir});
 Mv(ArchivePath, "bin/Release/net10.0/win-x64/publishNoPdb/Ngan.Dict.Windows.tar.gz");
 
 Console.WriteLine("Windows publish completed.");

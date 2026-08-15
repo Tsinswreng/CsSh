@@ -27,7 +27,7 @@ public enum CommandOutputMode{
 }
 
 /// 外部命令的完整执行结果。
-/// Sh.Run 在 ExitCode 非零时会抛出 CommandFailedException；Sh.TryRun 始终返回此对象。
+/// Sh.X 在 ExitCode 非零时会抛出 CommandFailedException；Sh.TryX 始终返回此对象。
 public sealed record CommandResult(
 	CommandSpec Command,
 	i32 ExitCode,
@@ -38,7 +38,7 @@ public sealed record CommandResult(
 	public bool IsSuccess{get;init;}
 }
 
-/// Sh.Run 遇到非零退出码时抛出的异常。
+/// Sh.X 遇到非零退出码时抛出的异常。
 public sealed partial class CommandFailedException:Exception{
 	/// 失败命令的结构化描述。
 	public CommandSpec Command{get;}
