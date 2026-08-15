@@ -6,6 +6,7 @@ public sealed record CommandSpec(
 	str Program,
 	IReadOnlyList<str> Arguments){
 	/// 子进程的工作目录；为 null 时使用调用进程当前目录。
+	/// 路径可统一使用正斜杠，例如 "src/app"。
 	/// 普通 C# 程序在并发运行命令时应优先设置此属性，而非调用全局的 Sh.Cd。
 	public str? Cwd{get;init;}
 

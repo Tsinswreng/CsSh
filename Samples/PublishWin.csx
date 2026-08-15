@@ -5,10 +5,9 @@
 using static Tsinswreng.Cssh.Sh;
 
 var Root = Pwd();
-var ProjectDir = Path.Combine(Root, "Ngan.Dict", "Ngan.Dict.Frontend", "proj", "Ngan.Dict.Windows");
 
 // 先保留上次發布結果；第一次執行時 publish 不存在，直接略過即可。
-Cd(ProjectDir);
+Cd("Ngan.Dict/Ngan.Dict.Frontend/proj/Ngan.Dict.Windows");
 Rm("publishOld", Force: true);
 if (Exists("publish"))
 	Mv("publish", "publishOld");
@@ -22,9 +21,9 @@ Run(
 // 此命令只在根目錄執行，不需要為切換目錄建立或恢復 scope。
 Run(new("sh", ["./CpAssets.sh"]){Cwd = Root});
 
-var ReleaseDir = Path.Combine(ProjectDir, "bin", "Release", "net10.0", "win-x64");
-var PublishDir = Path.Combine(ReleaseDir, "publish");
-var PublishNoPdbDir = Path.Combine(ReleaseDir, "publishNoPdb");
+var ReleaseDir = "bin/Release/net10.0/win-x64";
+var PublishDir = "bin/Release/net10.0/win-x64/publish";
+var PublishNoPdbDir = "bin/Release/net10.0/win-x64/publishNoPdb";
 
 // 生成一份可分發副本，再刪除符號檔。
 Rm(PublishNoPdbDir, Force: true);
@@ -33,9 +32,9 @@ foreach (var Pdb in Find("*.pdb", Under: PublishNoPdbDir))
 	Rm(Pdb, Force: true);
 
 // 壓縮檔暫存在來源目錄外，以免 tar 在掃描來源時把自身打進去。
-var ArchivePath = Path.Combine(ReleaseDir, "Ngan.Dict.Windows.tar.gz");
+var ArchivePath = Root + "/Ngan.Dict/Ngan.Dict.Frontend/proj/Ngan.Dict.Windows/bin/Release/net10.0/win-x64/Ngan.Dict.Windows.tar.gz";
 Rm(ArchivePath, Force: true);
 Run(new("tar", ["-czf", ArchivePath, "."]){Cwd = PublishNoPdbDir});
-Mv(ArchivePath, Path.Combine(PublishNoPdbDir, "Ngan.Dict.Windows.tar.gz"));
+Mv(ArchivePath, "bin/Release/net10.0/win-x64/publishNoPdb/Ngan.Dict.Windows.tar.gz");
 
 Console.WriteLine("Windows publish completed.");

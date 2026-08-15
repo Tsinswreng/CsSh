@@ -8,6 +8,8 @@ public static partial class Sh{
 	public static partial str Pwd();
 
 	/// 切换当前进程的工作目录，等价于 Bash 的 cd。
+	/// Cssh 的所有路径参数均接受正斜杠；例如 Cd("src/app") 在 Windows、Linux 与 macOS 上含义相同。
+	/// Cssh 的所有路径参数均接受正斜杠；例如 Cd("src/app") 在 Windows、Linux 与 macOS 上含义相同。
 	/// 此变更影响后续相对路径和未设置 CommandSpec.Cwd 的命令。
 	public static partial void Cd(str Path);
 

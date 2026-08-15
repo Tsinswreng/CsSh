@@ -2,6 +2,7 @@ namespace Tsinswreng.Cssh;
 
 /// 供 csx 构建脚本直接静态导入的文件系统动词。
 /// 每个路径均由 .NET 负责平台适配，不依赖 Bash、PowerShell 或外部 coreutils。
+/// 调用方可统一使用正斜杠，例如 Rm("artifacts/publish")；无需调用 Path.Combine。
 public static partial class Sh{
 	/// 判断路径是否存在，可以是文件或目录。
 	public static partial bool Exists(str Path);
