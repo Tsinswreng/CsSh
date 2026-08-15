@@ -4,6 +4,18 @@
 
 using static Tsinswreng.Cssh.Sh;
 
+using var CtSource = new CancellationTokenSource();
+var Ct = CtSource.Token;
+
+// 所有命令結果直通目前終端；命令輸出與退出等待均為非同步。
+async Task XTerm(string Text){
+	await using var Command = X(Text, Ct: Ct);
+	await Task.WhenAll(
+		Write(Stdout, Command.Result.Stdout, Ct),
+		Write(Stderr, Command.Result.Stderr, Ct),
+		Command.Done);
+}
+
 // 每個目錄都依原 Bash 腳本的順序掃描；Find 保持惰性，不會先將所有專案載入記憶體。
 var ProjectRoots = new[]{
 	"Ngan.Dict/Ngan.Dict.Core/proj",
@@ -60,6 +72,6 @@ var ProjectRoots = new[]{
 };
 
 foreach (var ProjectRoot in ProjectRoots) {
-	foreach (var Project in Find("*.csproj", Under: ProjectRoot))
-		X($"dotnet sln add {Project}");
+	await foreach (var Project in Find(ProjectRoot + "/**/*.csproj", Ct))
+		await XTerm($"dotnet sln add \"{Project.Path}\"");
 }

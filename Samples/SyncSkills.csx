@@ -4,72 +4,89 @@
 
 using static Tsinswreng.Cssh.Sh;
 
+using var CtSource = new CancellationTokenSource();
+var Ct = CtSource.Token;
 var Root = ScriptDir();
 var SkillsRepoDir = Root + "/.Tsinswreng/Skills";
 var AgentsSkillsDir = Root + "/.agents/skills";
 var GitHubBaseUrl = "https://github.com/Tsinswreng";
 
 // 將一個技能倉庫同步到 .agents/skills。clone 與 pull 的失敗均中止單項模式。
-void SyncOne(string SkillName){
+async Task XTerm(string Text){
+	await using var Command = X(Text, Ct: Ct);
+	await Task.WhenAll(
+		Write(Stdout, Command.Result.Stdout, Ct),
+		Write(Stderr, Command.Result.Stderr, Ct),
+		Command.Done);
+}
+
+async Task<bool> TryXTerm(string Text){
+	await using var Command = TryX(Text, Ct: Ct);
+	await Task.WhenAll(
+		Write(Stdout, Command.Result.Stdout, Ct),
+		Write(Stderr, Command.Result.Stderr, Ct));
+	return (await Command.Done).IsSuccess;
+}
+
+async Task SyncOne(string SkillName){
 	var RepoName = "tsinswreng-" + SkillName;
 	var RepoDir = SkillsRepoDir + "/" + RepoName;
 	var RepoUrl = GitHubBaseUrl + "/skill-" + SkillName + ".git";
 
-	if (Exists(RepoDir)) {
-		Console.WriteLine("[pull] " + RepoName);
-		X($"git -C {RepoDir} pull");
+	if (await Exists(RepoDir, Ct)) {
+		await Echo("[pull] " + RepoName, Ct);
+		await XTerm($"git -C \"{RepoDir}\" pull");
 	}
 	else {
-		Console.WriteLine("[clone] " + RepoName + " <- " + RepoUrl);
-		X($"git clone {RepoUrl} {RepoDir}");
+		await Echo("[clone] " + RepoName + " <- " + RepoUrl, Ct);
+		await XTerm($"git clone \"{RepoUrl}\" \"{RepoDir}\"");
 	}
 
-	SyncSkillContent(RepoDir, RepoName);
+	await SyncSkillContent(RepoDir, RepoName);
 }
 
 // 用倉庫名定位其內層技能目錄，並覆蓋 .agents 中的舊副本。
-void SyncSkillContent(string RepoDir, string RepoName){
+async Task SyncSkillContent(string RepoDir, string RepoName){
 	var Source = RepoDir + "/" + RepoName;
 	var Destination = AgentsSkillsDir + "/" + RepoName;
 
-	if (!Exists(Source)) {
-		Console.WriteLine("[warn] skill inner directory not found: " + Source + ", skipping copy");
+	if (!await Exists(Source, Ct)) {
+		await Echo("[warn] skill inner directory not found: " + Source + ", skipping copy", Ct);
 		return;
 	}
 
-	Mkdir(AgentsSkillsDir);
-	Console.WriteLine("[sync] " + Source + " -> " + Destination);
-	Rm(Destination, Force: true);
-	Cp(Source, Destination);
+	await Mkdir(AgentsSkillsDir, Ct);
+	await Echo("[sync] " + Source + " -> " + Destination, Ct);
+	await Rm(Destination, Force: true, Ct);
+	await Cp(Source, Destination, Ct: Ct);
 }
 
-Mkdir(SkillsRepoDir);
+await Mkdir(SkillsRepoDir, Ct);
 
 var ScriptArgs = Args();
 if (ScriptArgs.Count >= 1) {
 	// 單項模式：dotnet script SyncSkills.csx <skill-short-name>
-	SyncOne(ScriptArgs[0]);
+	await SyncOne(ScriptArgs[0]);
 }
 else {
-	Console.WriteLine("[sync-all] pulling and syncing all skills in " + SkillsRepoDir);
+	await Echo("[sync-all] pulling and syncing all skills in " + SkillsRepoDir, Ct);
 	var FoundAny = false;
 
-	foreach (var RepoDir in Dirs(SkillsRepoDir)) {
-		var RepoName = RepoDir.Split(['/', '\\']).Last();
-		if (!RepoName.StartsWith("tsinswreng-") || !Exists(RepoDir + "/.git"))
+	await foreach (var Repo in Ls(SkillsRepoDir, Ct: Ct)) {
+		if (!Repo.IsDir || !Repo.Name.StartsWith("tsinswreng-") || !await Exists(Repo.Path + "/.git", Ct))
 			continue;
 
-		Console.WriteLine("[pull] " + RepoName);
-		var PullResult = TryX($"git -C {RepoDir} pull");
-		if (!PullResult.IsSuccess)
-			Console.WriteLine("[warn] pull failed for " + RepoName + ", continuing...");
+		await Echo("[pull] " + Repo.Name, Ct);
+		var PullSucceeded = await TryXTerm($"git -C \"{Repo.Path}\" pull");
+		if (!PullSucceeded)
+			await Echo("[warn] pull failed for " + Repo.Name + ", continuing...", Ct);
 
-		SyncSkillContent(RepoDir, RepoName);
+		await SyncSkillContent(Repo.Path, Repo.Name);
 		FoundAny = true;
 	}
 
 	if (!FoundAny)
-		Console.WriteLine("[warn] no skill repos found in " + SkillsRepoDir);
+		await Echo("[warn] no skill repos found in " + SkillsRepoDir, Ct);
 }
 
-Console.WriteLine("[done]");
+await Echo("[done]", Ct);
