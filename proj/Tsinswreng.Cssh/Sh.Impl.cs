@@ -1,4 +1,4 @@
-namespace Tsinswreng.Cssh;
+namespace Tsinswreng.CsSh;
 
 public static partial class Sh{
 	public static partial str Pwd() {

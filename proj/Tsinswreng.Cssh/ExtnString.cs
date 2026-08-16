@@ -1,4 +1,4 @@
-namespace Tsinswreng.Cssh;
+namespace Tsinswreng.CsSh;
 
 /// Adds the path-join operator to ordinary strings for Cssh scripts.
 /// The result always uses forward slashes, so it can be supplied unchanged to every Cssh path API.

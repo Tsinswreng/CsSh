@@ -2,7 +2,7 @@ using System.Runtime.CompilerServices;
 using System.Text;
 using System.Text.RegularExpressions;
 
-namespace Tsinswreng.Cssh;
+namespace Tsinswreng.CsSh;
 
 public static partial class Sh{
 	public static partial bool Exists(str Path) {

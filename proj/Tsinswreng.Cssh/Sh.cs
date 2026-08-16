@@ -1,4 +1,4 @@
-namespace Tsinswreng.Cssh;
+namespace Tsinswreng.CsSh;
 
 /// Cssh 面向 csx 的唯一脚本入口。
 /// 脚本可使用 using static Tsinswreng.Cssh.Sh，直接书写 Cd、X、Mkdir、Rm、Cp、Mv、Ls 与 Find。
