@@ -12,14 +12,14 @@ public static partial class ShGlobal{
 	public static partial void Echo(str Text){ Sh.Echo(Text); }
 	public static partial Task<nil> Echo(str Text, CT Ct){ return Sh.Echo(Text, Ct); }
 	public static partial void Cd(str Path){ Sh.Cd(Path); }
-	public static partial Command X(str Command){ return Sh.X(Command); }
-	public static partial Command X(str Command, CommandOptions Options){ return Sh.X(Command, Options); }
-	public static partial Command X(str Command, in CT Ct){ return Sh.X(Command, Ct); }
-	public static partial Command X(str Command, CommandOptions Options, CT Ct){ return Sh.X(Command, Options, Ct); }
-	public static partial Command TryX(str Command){ return Sh.TryX(Command); }
-	public static partial Command TryX(str Command, CommandOptions Options){ return Sh.TryX(Command, Options); }
-	public static partial Command TryX(str Command, in CT Ct){ return Sh.TryX(Command, Ct); }
-	public static partial Command TryX(str Command, CommandOptions Options, CT Ct){ return Sh.TryX(Command, Options, Ct); }
+	public static partial Command X(str Command){ return Sh.Exe(Command); }
+	public static partial Command X(str Command, CommandOptions Options){ return Sh.Exe(Command, Options); }
+	public static partial Command X(str Command, in CT Ct){ return Sh.Exe(Command, Ct); }
+	public static partial Command X(str Command, CommandOptions Options, CT Ct){ return Sh.Exe(Command, Options, Ct); }
+	public static partial Command TryX(str Command){ return Sh.TryExe(Command); }
+	public static partial Command TryX(str Command, CommandOptions Options){ return Sh.TryExe(Command, Options); }
+	public static partial Command TryX(str Command, in CT Ct){ return Sh.TryExe(Command, Ct); }
+	public static partial Command TryX(str Command, CommandOptions Options, CT Ct){ return Sh.TryExe(Command, Options, Ct); }
 	public static partial void Write(Content Target, Content Source){ Sh.Write(Target, Source); }
 	public static partial Task<nil> Write(Content Target, Content Source, CT Ct){ return Sh.Write(Target, Source, Ct); }
 	public static partial void Write(Content Target, IReadOnlyList<Content> Sources){ Sh.Write(Target, Sources); }

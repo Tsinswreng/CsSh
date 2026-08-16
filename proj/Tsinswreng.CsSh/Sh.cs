@@ -44,31 +44,31 @@ public partial class Sh{
 	/// 创建一条尚未启动的命令。
 	/// Command 仅按第一个空白字符切出可执行文件，其余原样作为 arguments 字符串交给子进程；不解析 shell 的管道、重定向、变量展开或引号语法。
 	/// 子进程不重定向标准输入并使用当前目录。
-	public partial Command X(str Command);
+	public partial Command Exe(str Command);
 
 	/// 创建一条带输入流或工作目录配置的尚未启动命令。
-	public partial Command X(str Command, CommandOptions Options);
+	public partial Command Exe(str Command, CommandOptions Options);
 
 	/// 使用可取消的异步流转送创建一条尚未启动的命令。
 	/// Ct 必须作为最后一个位置参数传入。
-	public partial Command X(str Command, in CT Ct);
+	public partial Command Exe(str Command, in CT Ct);
 
 	/// 使用可取消的异步流转送创建一条尚未启动的命令。
 	/// Ct 必须作为最后一个位置参数传入；需要输入流或工作目录时使用带 Options 的重载。
-	public partial Command X(str Command, CommandOptions Options, CT Ct);
+	public partial Command Exe(str Command, CommandOptions Options, CT Ct);
 
 	/// 创建一条尚未启动、且非零退出码不抛异常的命令。
 	/// 其他语义与 X 相同，退出码通过 Command.Done 的 CommandExit 返回。
-	public partial Command TryX(str Command);
+	public partial Command TryExe(str Command);
 
 	/// 创建一条带输入流或工作目录配置的尚未启动命令，且非零退出码不抛异常。
-	public partial Command TryX(str Command, CommandOptions Options);
+	public partial Command TryExe(str Command, CommandOptions Options);
 
 	/// 创建一条尚未启动、且可由 Ct 取消的命令；Ct 必须作为最后一个位置参数传入。
-	public partial Command TryX(str Command, in CT Ct);
+	public partial Command TryExe(str Command, in CT Ct);
 
 	/// 创建一条尚未启动、且可由 Ct 取消的命令；Ct 必须作为最后一个位置参数传入。
-	public partial Command TryX(str Command, CommandOptions Options, CT Ct);
+	public partial Command TryExe(str Command, CommandOptions Options, CT Ct);
 
 	/// 非同步地将 Source 复制到 Target。
 	/// 读取命令的 Result.Stdout 或 Result.Stderr 会触发命令执行；Source 结束时不会关闭调用方提供的 Target。

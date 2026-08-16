@@ -45,36 +45,36 @@ public partial class Sh{
 		CurrentDirectory = System.IO.Path.GetFullPath(Candidate).Replace('\\', '/');
 	}
 
-	public partial Command X(str Command) {
-		return X(Command, new(), CancellationToken.None);
+	public partial Command Exe(str Command) {
+		return Exe(Command, new(), CancellationToken.None);
 	}
 
-	public partial Command X(str Command, CommandOptions Options) {
-		return X(Command, Options, CancellationToken.None);
+	public partial Command Exe(str Command, CommandOptions Options) {
+		return Exe(Command, Options, CancellationToken.None);
 	}
 
-	public partial Command X(str Command, in CT Ct) {
-		return X(Command, new(), Ct);
+	public partial Command Exe(str Command, in CT Ct) {
+		return Exe(Command, new(), Ct);
 	}
 
-	public partial Command X(str Command, CommandOptions Options, CT Ct) {
+	public partial Command Exe(str Command, CommandOptions Options, CT Ct) {
 		var Cwd = NormalizeFileSystemPath(Options.Cwd ?? CurrentDirectory);
 		return new(new(Command, Options, Cwd, Stdout, Stderr, Ct, true));
 	}
 
-	public partial Command TryX(str Command) {
-		return TryX(Command, new(), CancellationToken.None);
+	public partial Command TryExe(str Command) {
+		return TryExe(Command, new(), CancellationToken.None);
 	}
 
-	public partial Command TryX(str Command, CommandOptions Options) {
-		return TryX(Command, Options, CancellationToken.None);
+	public partial Command TryExe(str Command, CommandOptions Options) {
+		return TryExe(Command, Options, CancellationToken.None);
 	}
 
-	public partial Command TryX(str Command, in CT Ct) {
-		return TryX(Command, new(), Ct);
+	public partial Command TryExe(str Command, in CT Ct) {
+		return TryExe(Command, new(), Ct);
 	}
 
-	public partial Command TryX(str Command, CommandOptions Options, CT Ct) {
+	public partial Command TryExe(str Command, CommandOptions Options, CT Ct) {
 		var Cwd = NormalizeFileSystemPath(Options.Cwd ?? CurrentDirectory);
 		return new(new(Command, Options, Cwd, Stdout, Stderr, Ct, false));
 	}
