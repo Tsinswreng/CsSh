@@ -58,7 +58,8 @@ public partial class Sh{
 	}
 
 	public partial Command X(str Command, CommandOptions Options, CT Ct) {
-		return new(new(this, Command, Options with {Cwd = Options.Cwd ?? CurrentDirectory}, Ct, true));
+		var Cwd = NormalizeFileSystemPath(Options.Cwd ?? CurrentDirectory);
+		return new(new(Command, Options, Cwd, Stdout, Stderr, Ct, true));
 	}
 
 	public partial Command TryX(str Command) {
@@ -74,7 +75,8 @@ public partial class Sh{
 	}
 
 	public partial Command TryX(str Command, CommandOptions Options, CT Ct) {
-		return new(new(this, Command, Options with {Cwd = Options.Cwd ?? CurrentDirectory}, Ct, false));
+		var Cwd = NormalizeFileSystemPath(Options.Cwd ?? CurrentDirectory);
+		return new(new(Command, Options, Cwd, Stdout, Stderr, Ct, false));
 	}
 
 	public partial void Write(Content Target, Content Source) {

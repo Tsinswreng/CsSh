@@ -84,4 +84,3 @@ public partial class Sh{
 	/// 非同步合并多条 Source 流并写入同一 Target；Ct 必须作为最后一个位置参数传入。
 	public partial Task<nil> Write(Content Target, IReadOnlyList<Content> Sources, CT Ct);
 }
-

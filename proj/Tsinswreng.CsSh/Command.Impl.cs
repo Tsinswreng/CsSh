@@ -28,7 +28,7 @@ public sealed partial class Command{
 	}
 
 	public partial Task<CommandExit> Out(CT Ct) {
-		return Out(Options.Sh.Stdout, Options.Sh.Stderr, Ct);
+		return Out(Options.Stdout, Options.Stderr, Ct);
 	}
 
 	public partial Task<CommandExit> Out(Content Target, CT Ct) {
@@ -36,7 +36,9 @@ public sealed partial class Command{
 	}
 
 	public async partial Task<CommandExit> Out(str TargetPath, CT Ct) {
-		var FileSystemPath = Options.Sh.NormalizeFileSystemPath(TargetPath);
+		var FileSystemPath = System.IO.Path.IsPathRooted(TargetPath)
+			? TargetPath
+			: System.IO.Path.Combine(Options.Cwd, TargetPath);
 		var Parent = Path.GetDirectoryName(FileSystemPath);
 		if (!string.IsNullOrEmpty(Parent))
 			Directory.CreateDirectory(Parent);
@@ -48,8 +50,8 @@ public sealed partial class Command{
 
 	public async partial Task<CommandExit> Out(Content Stdout, Content Stderr, CT Ct) {
 		await Task.WhenAll(
-			Options.Sh.Write(Stdout, Result.Stdout, Ct),
-			Options.Sh.Write(Stderr, Result.Stderr, Ct),
+			Write(Stdout, Result.Stdout, Ct),
+			Write(Stderr, Result.Stderr, Ct),
 			Done).ConfigureAwait(false);
 		return await Done.ConfigureAwait(false);
 	}
@@ -57,7 +59,7 @@ public sealed partial class Command{
 	/// Keeps a single output target safe from concurrent stdout/stderr writes.
 	private async Task<CommandExit> Out(IReadOnlyList<Content> Targets, CT Ct) {
 		await Task.WhenAll(
-			Options.Sh.Write(Targets[0], [Result.Stdout, Result.Stderr], Ct),
+			Write(Targets[0], [Result.Stdout, Result.Stderr], Ct),
 			Done).ConfigureAwait(false);
 		return await Done.ConfigureAwait(false);
 	}
@@ -137,7 +139,7 @@ public sealed partial class Command{
 		return new(){
 			FileName = Program,
 			Arguments = Arguments,
-			WorkingDirectory = Options.Sh.NormalizeFileSystemPath(Options.Options.Cwd ?? Options.Sh.Pwd()),
+			WorkingDirectory = Options.Cwd,
 			UseShellExecute = false,
 			RedirectStandardInput = Options.Options.Input is not null,
 			RedirectStandardOutput = true,
@@ -150,6 +152,18 @@ public sealed partial class Command{
 			return;
 		await Options.Options.Input.Stream.CopyToAsync(Process.StandardInput.BaseStream, Options.Ct).ConfigureAwait(false);
 		await Process.StandardInput.BaseStream.DisposeAsync().ConfigureAwait(false);
+	}
+
+	/// Copies one Content source to its target without requiring a Shell instance.
+	private static async Task Write(Content Target, Content Source, CT Ct) {
+		await Source.Stream.CopyToAsync(Target.Stream, Ct).ConfigureAwait(false);
+		await Target.Stream.FlushAsync(Ct).ConfigureAwait(false);
+	}
+
+	/// Serializes multiple sources when stdout and stderr share the same target.
+	private static async Task Write(Content Target, IReadOnlyList<Content> Sources, CT Ct) {
+		foreach (var Source in Sources)
+			await Write(Target, Source, Ct).ConfigureAwait(false);
 	}
 
 	private async Task CompletePipes(Exception? Error = null) {

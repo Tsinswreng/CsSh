@@ -54,9 +54,11 @@ public sealed record CommandOptions(
 
 /// Command 的內部執行配置。
 public sealed record CommandRunOptions(
-	Sh Sh,
 	str Text,
 	CommandOptions Options,
+	str Cwd,
+	Content Stdout,
+	Content Stderr,
 	CT Ct,
 	bool ThrowOnError);
 
