@@ -34,11 +34,11 @@ public partial class TestCssh{
 			}
 
 			// Ls reports item type; Cp/Mv then produce the state for Find to inspect.
-			var Entries = new Dictionary<str, FileSystemEntry>();
+			var Entries = new Dictionary<str, FileSystemInfo>();
 			await foreach (var Entry in Ls(IntegratedRoot, Ct)) {
 				Entries.Add(Entry.Name, Entry);
 			}
-			T(Entries["input"].IsDir);
+			T(Entries["input"] is DirectoryInfo);
 			var CopiedFile = IntegratedRoot / "output" / "copy.txt";
 			var MovedFile = IntegratedRoot / "output" / "final.txt";
 			await Cp(SourceFile, CopiedFile, Ct);

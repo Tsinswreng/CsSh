@@ -10,6 +10,9 @@ public partial class TestCssh{
 	/// Verifies Ls reports file-system kinds.
 	public partial Task<object?> LsExposesFileAndDirectoryKinds(object? O);
 
+	/// Verifies Ls returns ordinary BCL metadata such as attributes and UTC timestamps.
+	public partial Task<object?> LsExposesBclFileAttributes(object? O);
+
 	/// Verifies recursive ** glob matching.
 	public partial Task<object?> FindMatchesRecursiveRelativeGlob(object? O);
 

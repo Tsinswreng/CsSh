@@ -46,13 +46,13 @@ await Cp("input/message.txt", "input/copy.txt", Ct);
 await Mv("input/copy.txt", "input/moved.txt", Ct);
 await Rm("input/moved.txt", Ct);
 
-// Ls 保留檔案、目錄與連結的類型資訊。
+// Ls 直接回傳 .NET FileSystemInfo；以 FileInfo/DirectoryInfo 型別與 Attributes 判斷項目性質。
 await foreach (var Item in Ls("input", Ct))
-	await Echo($"ls: {Item.Name}; file={Item.IsFile}; dir={Item.IsDir}; link={Item.IsLink}", Ct);
+	await Echo($"ls: {Item.Name}; file={Item is FileInfo}; dir={Item is DirectoryInfo}; link={Item.Attributes.HasFlag(FileAttributes.ReparsePoint)}; modified={Item.LastWriteTimeUtc:O}", Ct);
 
 // Find 接收 Bash 風格的 glob 路徑，並以 IAsyncEnumerable 惰性輸出結果。
 await foreach (var Item in Find("input/**/*.txt", Ct))
-	await Echo("find: " + Item.Path, Ct);
+	await Echo("find: " + Item.FullName.Replace('\\', '/'), Ct);
 
 // X 只建立惰性 Command DTO；XTerm 開始消費 Result 的兩條 Stream 後才啟動命令。
 await XTerm(X("dotnet --version", Ct));

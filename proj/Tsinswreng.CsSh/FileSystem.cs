@@ -1,15 +1,5 @@
 namespace Tsinswreng.CsSh;
 
-/// 由 Ls 或 Find 列出的一个文件系统项目。
-/// Path 是可直接传回 Cssh 文件操作的完整路径；Name 是最后一段名称。
-/// IsFile、IsDir 与 IsLink 保留项目类型，脚本无需重新访问文件系统或从路径文本猜测类型。
-public sealed record FileSystemEntry(
-	str Path,
-	str Name,
-	bool IsFile,
-	bool IsDir,
-	bool IsLink);
-
 /// Cp 的可选行为。
 public sealed record CpOptions(
 	bool Overwrite = false);
@@ -65,21 +55,22 @@ public static partial class Sh{
 
 	/// 惰性查找匹配的文件系统项目，等价于 Bash 的 find。
 	/// Pattern 是跨平台 glob 路径，支持 /、*、? 与 **；例如 Find("src/**/*.csproj")。
-	/// 返回 FileSystemEntry，并保留每个项目的路径、名称与类型。
-	public static partial IEnumerable<FileSystemEntry> Find(str Pattern);
+	/// 返回 .NET 的 FileSystemInfo；文件为 FileInfo、目录为 DirectoryInfo。
+	/// 可直接读取 Attributes、LastWriteTimeUtc 等 BCL 属性；文件大小使用 FileInfo.Length。
+	public static partial IEnumerable<FileSystemInfo> Find(str Pattern);
 
 	/// 异步查找匹配的文件系统项目；Ct 必须作为最后一个位置参数传入。
-	public static partial IAsyncEnumerable<FileSystemEntry> Find(str Pattern, CT Ct);
+	public static partial IAsyncEnumerable<FileSystemInfo> Find(str Pattern, CT Ct);
 
 	/// 惰性列出目录中的子项，等价于 Bash 的 ls。
-	/// 返回 FileSystemEntry；Path 为 null 时列出当前目录；Recursive 为 false 时仅列出直接子项。
-	public static partial IEnumerable<FileSystemEntry> Ls(str? Path = null, LsOptions? Options = null);
+	/// 返回 .NET 的 FileSystemInfo；Path 为 null 时列出当前目录；Recursive 为 false 时仅列出直接子项。
+	public static partial IEnumerable<FileSystemInfo> Ls(str? Path = null, LsOptions? Options = null);
 
 	/// 异步列出目录中的子项；Ct 必须作为最后一个位置参数传入。
-	public static partial IAsyncEnumerable<FileSystemEntry> Ls(str? Path, CT Ct);
+	public static partial IAsyncEnumerable<FileSystemInfo> Ls(str? Path, CT Ct);
 
 	/// 异步列出目录中的子项；需要递归列出时传入 Options；Ct 必须作为最后一个位置参数传入。
-	public static partial IAsyncEnumerable<FileSystemEntry> Ls(str? Path, LsOptions? Options, CT Ct);
+	public static partial IAsyncEnumerable<FileSystemInfo> Ls(str? Path, LsOptions? Options, CT Ct);
 
 	/// 讀取檔案為 Content；呼叫方可將結果隱式視為 string 或普通 Stream。
 	public static partial Content Read(str Path);

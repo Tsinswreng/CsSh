@@ -72,15 +72,15 @@ else {
 	var FoundAny = false;
 
 	foreach (var Repo in Ls(SkillsRepoDir)) {
-		if (!Repo.IsDir || !Repo.Name.StartsWith("tsinswreng-") || !Exists(Repo.Path / ".git"))
+		if (Repo is not DirectoryInfo || !Repo.Name.StartsWith("tsinswreng-") || !Exists(Repo.FullName / ".git"))
 			continue;
 
 		Echo("[pull] " + Repo.Name);
-		var PullSucceeded = TryXTerm($"git -C \"{Repo.Path}\" pull");
+		var PullSucceeded = TryXTerm($"git -C \"{Repo.FullName}\" pull");
 		if (!PullSucceeded)
 			Echo("[warn] pull failed for " + Repo.Name + ", continuing...");
 
-		SyncSkillContent(Repo.Path, Repo.Name);
+		SyncSkillContent(Repo.FullName, Repo.Name);
 		FoundAny = true;
 	}
 

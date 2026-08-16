@@ -113,46 +113,44 @@ public static partial class Sh{
 		return NIL;
 	}
 
-	public static partial IEnumerable<FileSystemEntry> Find(str Pattern) {
+	public static partial IEnumerable<FileSystemInfo> Find(str Pattern) {
 		var Regex = GlobToRegex(NormalizePath(Pattern));
 		var Root = GlobRoot(Pattern);
 		if (!Directory.Exists(Root))
 			return [];
-		return Directory.EnumerateFileSystemEntries(Root, "*", SearchOption.AllDirectories)
-			.Select(MakeEntry)
-			.Where(Entry => Regex.IsMatch(Entry.Path));
+		return new DirectoryInfo(Root).EnumerateFileSystemInfos("*", SearchOption.AllDirectories)
+			.Where(Entry => Regex.IsMatch(NormalizePath(Entry.FullName)));
 	}
 
-	public static async partial IAsyncEnumerable<FileSystemEntry> Find(str Pattern, [EnumeratorCancellation] CT Ct) {
+	public static async partial IAsyncEnumerable<FileSystemInfo> Find(str Pattern, [EnumeratorCancellation] CT Ct) {
 		var Regex = GlobToRegex(NormalizePath(Pattern));
 		var Root = GlobRoot(Pattern);
 		if (!Directory.Exists(Root))
 			yield break;
-		foreach (var Path in Directory.EnumerateFileSystemEntries(Root, "*", SearchOption.AllDirectories)) {
+		foreach (var Entry in new DirectoryInfo(Root).EnumerateFileSystemInfos("*", SearchOption.AllDirectories)) {
 			Ct.ThrowIfCancellationRequested();
-			var Entry = MakeEntry(Path);
-			if (Regex.IsMatch(NormalizePath(Path)))
+			if (Regex.IsMatch(NormalizePath(Entry.FullName)))
 				yield return Entry;
 			await Task.Yield();
 		}
 	}
 
-	public static partial IEnumerable<FileSystemEntry> Ls(str? Path, LsOptions? Options) {
+	public static partial IEnumerable<FileSystemInfo> Ls(str? Path, LsOptions? Options) {
 		var Root = NormalizeFileSystemPath(Path ?? ".");
 		var Option = Options?.Recursive == true ? SearchOption.AllDirectories : SearchOption.TopDirectoryOnly;
-		return Directory.EnumerateFileSystemEntries(Root, "*", Option).Select(MakeEntry);
+		return new DirectoryInfo(Root).EnumerateFileSystemInfos("*", Option);
 	}
 
-	public static partial IAsyncEnumerable<FileSystemEntry> Ls(str? Path, CT Ct) {
+	public static partial IAsyncEnumerable<FileSystemInfo> Ls(str? Path, CT Ct) {
 		return Ls(Path, null, Ct);
 	}
 
-	public static async partial IAsyncEnumerable<FileSystemEntry> Ls(str? Path, LsOptions? Options, [EnumeratorCancellation] CT Ct) {
+	public static async partial IAsyncEnumerable<FileSystemInfo> Ls(str? Path, LsOptions? Options, [EnumeratorCancellation] CT Ct) {
 		var Root = NormalizeFileSystemPath(Path ?? ".");
 		var Option = Options?.Recursive == true ? SearchOption.AllDirectories : SearchOption.TopDirectoryOnly;
-		foreach (var EntryPath in Directory.EnumerateFileSystemEntries(Root, "*", Option)) {
+		foreach (var Entry in new DirectoryInfo(Root).EnumerateFileSystemInfos("*", Option)) {
 			Ct.ThrowIfCancellationRequested();
-			yield return MakeEntry(EntryPath);
+			yield return Entry;
 			await Task.Yield();
 		}
 	}
@@ -218,13 +216,6 @@ public static partial class Sh{
 			var Relative = Path.GetRelativePath(Source, SourceFile);
 			await CopyFile(SourceFile, Path.Combine(Destination, Relative), false, Ct).ConfigureAwait(false);
 		}
-	}
-
-	private static FileSystemEntry MakeEntry(str Path) {
-		var Attributes = File.GetAttributes(Path);
-		var IsDir = Attributes.HasFlag(FileAttributes.Directory);
-		var IsLink = Attributes.HasFlag(FileAttributes.ReparsePoint);
-		return new(NormalizePath(Path), System.IO.Path.GetFileName(Path), !IsDir, IsDir, IsLink);
 	}
 
 	private static str GlobRoot(str Pattern) {
