@@ -10,7 +10,7 @@ public partial class TestCssh{
 		var Register = Node.MkTestFnRegister(
 			typeof(TestCssh),
 			[typeof(ShGlobal), typeof(ExtnString)],
-			[nameof(Mkdir), nameof(Write), nameof(Read), nameof(Append), nameof(Cp), nameof(Mv), nameof(Ls), nameof(Find), nameof(Cmd), nameof(TryCmd), nameof(Rm)],
+			[nameof(Mkdir), nameof(Write), nameof(Read), nameof(Append), nameof(Cp), nameof(Mv), nameof(Ls), nameof(Find), nameof(Exe), nameof(Cmd), nameof(TryCmd), nameof(Command.Text), nameof(Rm)],
 			"Integrated").Register;
 		Register(nameof(IntegratedWorkflowCreatesUsesAndRemovesEntrySideData), IntegratedWorkflowCreatesUsesAndRemovesEntrySideData!);
 	}
@@ -25,8 +25,8 @@ public partial class TestCssh{
 		await Mkdir(IntegratedRoot, Ct);
 		try {
 			// string enters the unified API through its implicit string-to-Content conversion.
-			var InputDir = IntegratedRoot / "input";
-			var SourceFile = InputDir / "message.txt";
+			var InputDir = IntegratedRoot/"input";
+			var SourceFile = InputDir/"message.txt";
 			await Write(SourceFile, "CsSh integration", Ct);
 			await using (Content TextContent = await Read(SourceFile, Ct)) {
 				string Text = TextContent;
@@ -39,8 +39,8 @@ public partial class TestCssh{
 				Entries.Add(Entry.Name, Entry);
 			}
 			T(Entries["input"] is DirectoryInfo);
-			var CopiedFile = IntegratedRoot / "output" / "copy.txt";
-			var MovedFile = IntegratedRoot / "output" / "final.txt";
+			var CopiedFile = IntegratedRoot/"output"/"copy.txt";
+			var MovedFile = IntegratedRoot/"output"/"final.txt";
 			await Cp(SourceFile, CopiedFile, Ct);
 			await Mv(CopiedFile, MovedFile, Ct);
 			T(!await Exists(CopiedFile, Ct));
@@ -49,13 +49,13 @@ public partial class TestCssh{
 				T(Text == "CsSh integration");
 			}
 			var TextFiles = new List<str>();
-			await foreach (var Entry in Find(IntegratedRoot / "**/*.txt", Ct)) {
+			await foreach (var Entry in Find(IntegratedRoot/"**/*.txt", Ct)) {
 				TextFiles.Add(Entry.Name);
 			}
 			T(TextFiles.Order().SequenceEqual(["final.txt", "message.txt"]));
 
 			// Append uses exactly the same Content source shape as Write; only the target open mode differs.
-			var LogFile = IntegratedRoot / "output" / "log.txt";
+			var LogFile = IntegratedRoot/"output"/"log.txt";
 			await Write(LogFile, "first\n", Ct);
 			await Append(LogFile, "second\n", Ct);
 			await using (Content LogContent = await Read(LogFile, Ct)) {
@@ -63,7 +63,7 @@ public partial class TestCssh{
 			}
 
 			// Ordinary Stream also enters Write implicitly through Content, without a second file API.
-			var StreamCopy = IntegratedRoot / "output" / "stream-copy.txt";
+			var StreamCopy = IntegratedRoot/"output"/"stream-copy.txt";
 			await using (Content SourceContent = await Read(SourceFile, Ct)) {
 				Stream SourceStream = SourceContent;
 				await Write(StreamCopy, SourceStream, Ct);
@@ -72,16 +72,19 @@ public partial class TestCssh{
 				T((string)StreamCopyContent == "CsSh integration");
 			}
 
-			// Command output is Content too; Out routes both streams and awaits completion without a helper API.
-			var VersionFile = IntegratedRoot / "output" / "dotnet-version.txt";
-			await using (var Version = Cmd("dotnet --version", Ct)) {
-				T((await Version.Out(VersionFile, Ct)).IsSuccess);
+			// Exe is the ordinary command path: execute immediately and relay output to the standard streams.
+			T((await Exe("dotnet", ["--version"], Ct)).IsSuccess);
+
+			// Text terminally consumes both streams and the exit result as one DTO; list arguments need no quoting.
+			await using (var Version = Cmd("dotnet", ["--version"], Ct)) {
+				var Result = await Version.Text(Ct);
+				T(Result.Exit.IsSuccess);
+				T(!string.IsNullOrWhiteSpace(Result.Stdout));
 			}
-			await using (Content VersionContent = await Read(VersionFile, Ct)) {
-				T(!string.IsNullOrWhiteSpace(await VersionContent.Text(Ct)));
-			}
-			await using (var Failed = TryCmd("dotnet cssh-command-that-does-not-exist", Ct)) {
-				T(!(await Failed.Done).IsSuccess);
+			await using (var Failed = TryCmd("dotnet", ["--definitely-invalid-option"], Ct)) {
+				var Result = await Failed.Text(Ct);
+				T(!Result.Exit.IsSuccess);
+				T(!string.IsNullOrWhiteSpace(Result.Stderr));
 			}
 		}
 		finally {
@@ -92,4 +95,3 @@ public partial class TestCssh{
 		return null;
 	}
 }
-
