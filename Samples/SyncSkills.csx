@@ -1,8 +1,8 @@
 // Cssh 版技能同步腳本，對應倉庫根目錄的 SyncSkills.sh。
-// #r "path/to/Tsinswreng.Cssh.dll"
+// #r "path/to/Tsinswreng.CsSh.dll"
 
-using Tsinswreng.Cssh;
-using static Tsinswreng.Cssh.Sh;
+using Tsinswreng.CsSh;
+using static Tsinswreng.CsSh.Sh;
 
 var Root = ScriptDir();
 var SkillsRepoDir = Root / ".Tsinswreng/Skills";
@@ -89,3 +89,4 @@ else {
 }
 
 Echo("[done]");
+

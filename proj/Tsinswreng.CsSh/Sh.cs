@@ -1,7 +1,7 @@
 namespace Tsinswreng.CsSh;
 
 /// Cssh 面向 csx 的唯一脚本入口。
-/// 脚本可使用 using static Tsinswreng.Cssh.Sh，直接书写 Cd、X、Mkdir、Rm、Cp、Mv、Ls 与 Find。
+/// 脚本可使用 using static Tsinswreng.CsSh.Sh，直接书写 Cd、X、Mkdir、Rm、Cp、Mv、Ls 与 Find。
 public static partial class Sh{
 	/// 当前脚本进程的标准输入流。
 	public static readonly Stream Stdin = Console.OpenStandardInput();
@@ -81,3 +81,4 @@ public static partial class Sh{
 	/// 非同步合并多条 Source 流并写入同一 Target；Ct 必须作为最后一个位置参数传入。
 	public static partial Task<nil> Write(Stream Target, IReadOnlyList<Stream> Sources, CT Ct);
 }
+

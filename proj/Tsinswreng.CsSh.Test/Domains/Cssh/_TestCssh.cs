@@ -1,6 +1,6 @@
 using Tsinswreng.CsTreeTest;
 
-namespace Cs.Test.Domains.Cssh;
+namespace Tsinswreng.CsSh.Test.Domains.CsSh;
 
 /// Groups public Cssh tests. Each API remains in its own partial source file.
 public partial class TestCssh:ITester{
@@ -20,3 +20,4 @@ public partial class TestCssh:ITester{
 		return Node;
 	}
 }
+

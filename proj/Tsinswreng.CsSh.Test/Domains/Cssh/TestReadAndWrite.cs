@@ -1,6 +1,6 @@
 using Tsinswreng.CsTreeTest;
 
-namespace Cs.Test.Domains.Cssh;
+namespace Tsinswreng.CsSh.Test.Domains.CsSh;
 
 /// Declares tests for concise asynchronous text I/O.
 public partial class TestCssh{
@@ -10,3 +10,4 @@ public partial class TestCssh{
 	/// Verifies normal asynchronous text I/O needs no null options placeholder.
 	public partial Task<object?> AsyncReadAndWriteNeedNoNullOptions(object? O);
 }
+

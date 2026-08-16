@@ -1,6 +1,6 @@
 using Tsinswreng.CsTreeTest;
 
-namespace Cs.Test.Domains.Cssh;
+namespace Tsinswreng.CsSh.Test.Domains.CsSh;
 
 /// Declares tests for the C# path-join extension operator.
 public partial class TestCssh{
@@ -10,3 +10,4 @@ public partial class TestCssh{
 	/// Verifies separator normalization and boundary joining.
 	public partial Task<object?> PathDivisionJoinsAndNormalizesSeparators(object? O);
 }
+

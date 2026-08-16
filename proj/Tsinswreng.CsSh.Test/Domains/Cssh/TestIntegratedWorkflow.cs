@@ -1,7 +1,7 @@
 using Tsinswreng.CsTreeTest;
-using Tsinswreng.Cssh;
+using Tsinswreng.CsSh;
 
-namespace Cs.Test.Domains.Cssh;
+namespace Tsinswreng.CsSh.Test.Domains.CsSh;
 
 /// Declares the one-case, stateful Cssh workflow test.
 public partial class TestCssh{

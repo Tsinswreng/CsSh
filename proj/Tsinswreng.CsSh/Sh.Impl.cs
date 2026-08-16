@@ -95,3 +95,4 @@ public static partial class Sh{
 		return Path.Replace('/', System.IO.Path.DirectorySeparatorChar);
 	}
 }
+

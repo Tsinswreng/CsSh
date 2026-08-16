@@ -1,9 +1,9 @@
 // Cssh 完整 API 樣本。
-// 以 dotnet-script 執行時，引用已發布的 Tsinswreng.Cssh 程序集：
-// #r "path/to/Tsinswreng.Cssh.dll"
+// 以 dotnet-script 執行時，引用已發布的 Tsinswreng.CsSh 程序集：
+// #r "path/to/Tsinswreng.CsSh.dll"
 
-using Tsinswreng.Cssh;
-using static Tsinswreng.Cssh.Sh;
+using Tsinswreng.CsSh;
+using static Tsinswreng.CsSh.Sh;
 
 using var CtSource = new CancellationTokenSource();
 var Ct = CtSource.Token;
@@ -106,3 +106,4 @@ await using (var Version = X("dotnet --info", Ct)) {
 
 Cd(StartDir);
 await Echo("Cssh complete sample finished.", Ct);
+

@@ -1,9 +1,9 @@
 using System.Text;
 using Tsinswreng.CsTreeTest;
-using Tsinswreng.Cssh;
-using static Tsinswreng.Cssh.Sh;
+using Tsinswreng.CsSh;
+using static Tsinswreng.CsSh.Sh;
 
-namespace Cs.Test.Domains.Cssh;
+namespace Tsinswreng.CsSh.Test.Domains.CsSh;
 
 /// Implements the one-case, stateful Cssh workflow test.
 public partial class TestCssh{
@@ -71,3 +71,4 @@ public partial class TestCssh{
 		return null;
 	}
 }
+

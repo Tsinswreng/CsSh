@@ -1,6 +1,6 @@
 using Tsinswreng.CsTreeTest;
-using Cs.Test.Domains.Cssh;
-namespace Cs.Test;
+using Tsinswreng.CsSh.Test.Domains.CsSh;
+namespace Tsinswreng.CsSh.Test;
 
 public class CsTestMgr:DiEtTestMgr{
 	public static CsTestMgr Inst = new();

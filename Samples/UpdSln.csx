@@ -1,8 +1,8 @@
 // Cssh 版 solution 更新腳本，對應倉庫根目錄的 UpdSln.sh。
-// #r "path/to/Tsinswreng.Cssh.dll"
+// #r "path/to/Tsinswreng.CsSh.dll"
 
-using Tsinswreng.Cssh;
-using static Tsinswreng.Cssh.Sh;
+using Tsinswreng.CsSh;
+using static Tsinswreng.CsSh.Sh;
 
 // 所有命令結果直通目前終端；命令輸出與退出等待均為非同步。
 void XTerm(string Text){
@@ -62,7 +62,7 @@ var ProjectRoots = new[]{
 	"Tsinswreng.CsTextWithBlob/proj",
 	"Tsinswreng.CsTreeTest/proj",
 	"Tsinswreng.CsTreeTest/proj/Samples",
-	"Tsinswreng.Cssh/proj",
+	"Tsinswreng.CsSh/proj",
 	"Tsinswreng.Avln.StrokeText/proj",
 	"Thesis/proj",
 	"Tsinswreng.OpenXmlTools/proj",
@@ -72,3 +72,4 @@ foreach (var ProjectRoot in ProjectRoots) {
 	foreach (var Project in Find(ProjectRoot / "**/*.csproj"))
 		XTerm($"dotnet sln add \"{Project.Path}\"");
 }
+

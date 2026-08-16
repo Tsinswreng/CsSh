@@ -13,3 +13,4 @@ public static partial class Sh{
 		Environment.SetEnvironmentVariable(Name, null);
 	}
 }
+

@@ -1,6 +1,6 @@
 using Tsinswreng.CsTreeTest;
 
-namespace Cs.Test.Domains.Cssh;
+namespace Tsinswreng.CsSh.Test.Domains.CsSh;
 
 /// Declares tests for directory creation and fixed rm -rf semantics.
 public partial class TestCssh{
@@ -13,3 +13,4 @@ public partial class TestCssh{
 	/// Verifies that an absent target is a successful Rm no-op.
 	public partial Task<object?> RmMissingPathIsSuccessful(object? O);
 }
+

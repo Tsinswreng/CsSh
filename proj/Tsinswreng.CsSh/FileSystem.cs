@@ -1,6 +1,6 @@
 using System.Text;
 
-namespace Tsinswreng.Cssh;
+namespace Tsinswreng.CsSh;
 
 /// 由 Ls 或 Find 列出的一个文件系统项目。
 /// Path 是可直接传回 Cssh 文件操作的完整路径；Name 是最后一段名称。

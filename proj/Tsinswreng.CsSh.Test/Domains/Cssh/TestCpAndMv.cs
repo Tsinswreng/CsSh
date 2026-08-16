@@ -1,6 +1,6 @@
 using Tsinswreng.CsTreeTest;
 
-namespace Cs.Test.Domains.Cssh;
+namespace Tsinswreng.CsSh.Test.Domains.CsSh;
 
 /// Declares tests for copy and move operations.
 public partial class TestCssh{
@@ -16,3 +16,4 @@ public partial class TestCssh{
 	/// Verifies concise asynchronous Cp and Mv overloads.
 	public partial Task<object?> AsyncCpAndMvNeedNoNullOptions(object? O);
 }
+

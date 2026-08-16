@@ -1,6 +1,6 @@
 using Tsinswreng.CsTreeTest;
 
-namespace Cs.Test.Domains.Cssh;
+namespace Tsinswreng.CsSh.Test.Domains.CsSh;
 
 /// Declares tests for successful lazy command execution.
 public partial class TestCssh{
@@ -13,3 +13,4 @@ public partial class TestCssh{
 	/// Verifies external input streams are supplied through CommandOptions.
 	public partial Task<object?> XPassesExternalStreamAsStdin(object? O);
 }
+

@@ -2,7 +2,7 @@ using System.Diagnostics;
 using System.IO.Pipelines;
 using System.Runtime.CompilerServices;
 
-namespace Tsinswreng.Cssh;
+namespace Tsinswreng.CsSh;
 
 public sealed partial class Command{
 	private readonly CommandRunOptions Options;
@@ -187,3 +187,4 @@ public sealed partial class CommandFailedException{
 		this.Exit = Exit;
 	}
 }
+

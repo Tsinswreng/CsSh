@@ -1,6 +1,6 @@
 using Tsinswreng.CsTreeTest;
 
-namespace Cs.Test.Domains.Cssh;
+namespace Tsinswreng.CsSh.Test.Domains.CsSh;
 
 /// Declares tests for non-throwing external command execution.
 public partial class TestCssh{
@@ -13,3 +13,4 @@ public partial class TestCssh{
 	/// Verifies the concise asynchronous X overload.
 	public partial Task<object?> AsyncXNeedsNoNullOptions(object? O);
 }
+

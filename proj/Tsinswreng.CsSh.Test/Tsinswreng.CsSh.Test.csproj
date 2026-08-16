@@ -6,7 +6,7 @@
 	
 	<ItemGroup>
 		<PackageReference Include="Tsinswreng.CsTreeTest" Version="0.1.1-alpha" />
-		<ProjectReference Include="../Tsinswreng.Cssh/Tsinswreng.Cssh.csproj" />
+		<ProjectReference Include="../Tsinswreng.CsSh/Tsinswreng.CsSh.csproj" />
 	</ItemGroup>
 
 </Project>

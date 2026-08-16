@@ -1,7 +1,7 @@
 using Tsinswreng.CsTreeTest;
-using Tsinswreng.Cssh;
+using Tsinswreng.CsSh;
 
-namespace Cs.Test.Domains.Cssh;
+namespace Tsinswreng.CsSh.Test.Domains.CsSh;
 
 /// Implements tests for listing and recursive glob lookup.
 public partial class TestCssh{
@@ -62,3 +62,4 @@ public partial class TestCssh{
 		return null;
 	}
 }
+

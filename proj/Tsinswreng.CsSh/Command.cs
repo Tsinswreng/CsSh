@@ -1,4 +1,4 @@
-namespace Tsinswreng.Cssh;
+namespace Tsinswreng.CsSh;
 
 /// 一条尚未启动的外部命令。
 /// X 创建该对象不会执行进程；首次异步读取 Result.Stdout、Result.Stderr，或等待 Done 时才启动一次。

@@ -1,4 +1,4 @@
-namespace Tsinswreng.Cssh;
+namespace Tsinswreng.CsSh;
 
 public static partial class Sh{
 	/// 取得当前进程的环境变量；不存在时返回 null。

@@ -1,6 +1,6 @@
-using Tsinswreng.Cssh;
+using Tsinswreng.CsSh;
 
-namespace Cs.Test.Domains.Cssh;
+namespace Tsinswreng.CsSh.Test.Domains.CsSh;
 
 /// Keeps test artefacts outside the repository and gives every case a collision-free root.
 internal static class TestSupport{
@@ -14,3 +14,4 @@ internal static class TestSupport{
 		Sh.Rm(Root);
 	}
 }
+

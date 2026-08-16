@@ -1,9 +1,9 @@
 // Cssh 版 Windows 發布腳本。
-// dotnet-script 使用時引用已發布的 Tsinswreng.Cssh 程序集：
-// #r "path/to/Tsinswreng.Cssh.dll"
+// dotnet-script 使用時引用已發布的 Tsinswreng.CsSh 程序集：
+// #r "path/to/Tsinswreng.CsSh.dll"
 
-using Tsinswreng.Cssh;
-using static Tsinswreng.Cssh.Sh;
+using Tsinswreng.CsSh;
+using static Tsinswreng.CsSh.Sh;
 
 var Root = Pwd();
 
@@ -47,3 +47,4 @@ XTerm($"tar -czf \"{ArchivePath}\" .", PublishNoPdbDir);
 Mv(ArchivePath, "bin/Release/net10.0/win-x64/publishNoPdb/Ngan.Dict.Windows.tar.gz");
 
 Echo("Windows publish completed.");
+
