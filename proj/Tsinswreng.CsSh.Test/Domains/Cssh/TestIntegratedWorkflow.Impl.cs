@@ -10,7 +10,7 @@ public partial class TestCssh{
 		var Register = Node.MkTestFnRegister(
 			typeof(TestCssh),
 			[typeof(ShGlobal), typeof(ExtnString)],
-			[nameof(Mkdir), nameof(Write), nameof(Read), nameof(Append), nameof(Cp), nameof(Mv), nameof(Ls), nameof(Find), nameof(X), nameof(TryX), nameof(Rm)],
+			[nameof(Mkdir), nameof(Write), nameof(Read), nameof(Append), nameof(Cp), nameof(Mv), nameof(Ls), nameof(Find), nameof(Cmd), nameof(TryCmd), nameof(Rm)],
 			"Integrated").Register;
 		Register(nameof(IntegratedWorkflowCreatesUsesAndRemovesEntrySideData), IntegratedWorkflowCreatesUsesAndRemovesEntrySideData!);
 	}
@@ -74,13 +74,13 @@ public partial class TestCssh{
 
 			// Command output is Content too; Out routes both streams and awaits completion without a helper API.
 			var VersionFile = IntegratedRoot / "output" / "dotnet-version.txt";
-			await using (var Version = X("dotnet --version", Ct)) {
+			await using (var Version = Cmd("dotnet --version", Ct)) {
 				T((await Version.Out(VersionFile, Ct)).IsSuccess);
 			}
 			await using (Content VersionContent = await Read(VersionFile, Ct)) {
 				T(!string.IsNullOrWhiteSpace(await VersionContent.Text(Ct)));
 			}
-			await using (var Failed = TryX("dotnet cssh-command-that-does-not-exist", Ct)) {
+			await using (var Failed = TryCmd("dotnet cssh-command-that-does-not-exist", Ct)) {
 				T(!(await Failed.Done).IsSuccess);
 			}
 		}

@@ -79,6 +79,40 @@ public partial class Sh{
 		return new(new(Command, Options, Cwd, Stdout, Stderr, Ct, false));
 	}
 
+	public partial CommandExit Exe(str Command) {
+		return Exe(Command, new CommandOptions());
+	}
+
+	public partial CommandExit Exe(str Command, CommandOptions Options) {
+		return Exe(Command, Options, CancellationToken.None).GetAwaiter().GetResult();
+	}
+
+	public partial Task<CommandExit> Exe(str Command, CT Ct) {
+		return Exe(Command, new(), Ct);
+	}
+
+	public async partial Task<CommandExit> Exe(str Command, CommandOptions Options, CT Ct) {
+		await using var CommandDto = Cmd(Command, Options, Ct);
+		return await CommandDto.Out(Ct).ConfigureAwait(false);
+	}
+
+	public partial CommandExit TryExe(str Command) {
+		return TryExe(Command, new CommandOptions());
+	}
+
+	public partial CommandExit TryExe(str Command, CommandOptions Options) {
+		return TryExe(Command, Options, CancellationToken.None).GetAwaiter().GetResult();
+	}
+
+	public partial Task<CommandExit> TryExe(str Command, CT Ct) {
+		return TryExe(Command, new(), Ct);
+	}
+
+	public async partial Task<CommandExit> TryExe(str Command, CommandOptions Options, CT Ct) {
+		await using var CommandDto = TryCmd(Command, Options, Ct);
+		return await CommandDto.Out(Ct).ConfigureAwait(false);
+	}
+
 	public partial void Write(Content Target, Content Source) {
 		Source.Stream.CopyTo(Target.Stream);
 		Target.Stream.Flush();
@@ -113,4 +147,3 @@ public partial class Sh{
 		return Candidate;
 	}
 }
-

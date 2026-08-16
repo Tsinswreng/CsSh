@@ -8,7 +8,7 @@ using static Tsinswreng.CsSh.ShGlobal;
 using var CtSource = new CancellationTokenSource();
 var Ct = CtSource.Token;
 var StartDir = Pwd();
-var Root = ScriptDir();
+var Root = CsxDir();
 var SampleDir = Root / "artifacts" / "cssh-sample";
 
 // 每個範例均在樣本目錄內操作，避免修改腳本以外的檔案。
@@ -16,9 +16,9 @@ await Rm(SampleDir, Ct);
 await Mkdir(SampleDir, Ct);
 Cd(SampleDir);
 
-// Pwd、ScriptDir、Args 與 Echo 是腳本的基本環境 API。
+// Pwd、CsxDir、Args 與 Echo 是腳本的基本環境 API。
 await Echo("pwd: " + Pwd(), Ct);
-await Echo("script dir: " + ScriptDir(), Ct);
+await Echo("script dir: " + CsxDir(), Ct);
 await Echo("argument count: " + Args().Count, Ct);
 
 // 環境變數由當前腳本進程持有；之後才啟動的 X 命令也會繼承它。
@@ -44,23 +44,21 @@ await foreach (var Item in Ls("input", Ct))
 await foreach (var Item in Find("input/**/*.txt", Ct))
 	await Echo("find: " + Item.FullName.Replace('\\', '/'), Ct);
 
-// X 只建立惰性 Command DTO；Out 開始消費 Result 的兩條 Stream 後才啟動命令。
-await using (var Version = X("dotnet --version", Ct))
-	await Version.Out(Ct);
+// Exe 是一般命令入口：立即執行並把兩條輸出流寫回終端。
+await Exe("dotnet --version", Ct);
 
-// TryX 對非零退出碼不丟例外，仍透過 Done 非同步取得結構化退出結果。
-await using var GitProbeCommand = TryX("git rev-parse --is-inside-work-tree", Ct);
-var GitProbe = await GitProbeCommand.Out(Ct);
+// TryExe 對非零退出碼不丟例外，仍非同步取得結構化退出結果。
+var GitProbe = await TryExe("git rev-parse --is-inside-work-tree", Ct);
 await Echo("git probe success: " + GitProbe.IsSuccess, Ct);
 
 // Write 對應 >、Append 對應 >>；命令結果本身就是 Content，可直接成為來源。
-await using (var Status = TryX("git status --short", Ct)) {
+await using (var Status = TryCmd("git status --short", Ct)) {
 	await Write("git-status.log", Status.Result.Stdout, Ct);
 	await Append("git-status.log", Status.Result.Stderr, Ct);
 	await Status.Done;
 }
 
-await using (var History = TryX("git log -1 --oneline", Ct)) {
+await using (var History = TryCmd("git log -1 --oneline", Ct)) {
 	await Write("history.log", History.Result.Stdout, Ct);
 	await Write(Stderr, History.Result.Stderr, Ct);
 	await History.Done;
@@ -68,13 +66,13 @@ await using (var History = TryX("git log -1 --oneline", Ct)) {
 
 // Read 回傳 Content，既可直接作 CommandOptions.Input，也可隱式取出普通 Stream。
 await using (Content Input = await Read("input/message.txt", Ct)) {
-	await using var Hash = X("git hash-object --stdin", new(Input), Ct);
+	await using var Hash = Cmd("git hash-object --stdin", new(Input), Ct);
 	await Hash.Out(Ct);
 }
 
 // 命令管道不解析 |：下游命令的 Input 直接指向上游 Command 的 stdout Content。
-await using var Log = X("git log --oneline", Ct);
-await using var LogHash = X("git hash-object --stdin", new(Log.Result.Stdout), Ct);
+await using var Log = Cmd("git log --oneline", Ct);
+await using var LogHash = Cmd("git hash-object --stdin", new(Log.Result.Stdout), Ct);
 await Task.WhenAll(
 	Write(Stdout, LogHash.Result.Stdout, Ct),
 	Write(Stderr, Log.Result.Stderr, Ct),
@@ -83,7 +81,7 @@ await Task.WhenAll(
 	LogHash.Done);
 
 // Null 是跨平台 /dev/null / NUL；此處只丟棄 stderr，stdout 仍顯示在終端。
-await using (var Version = X("dotnet --info", Ct)) {
+await using (var Version = Cmd("dotnet --info", Ct)) {
 	await Version.Out(Stdout, Null, Ct);
 }
 

@@ -4,7 +4,7 @@
 using Tsinswreng.CsSh;
 using static Tsinswreng.CsSh.ShGlobal;
 
-var Root = Path.GetFullPath(ScriptDir() / "../..").Replace('\\', '/');
+var Root = Path.GetFullPath(CsxDir() / "../..").Replace('\\', '/');
 var SkillsRepoDir = Root / ".Tsinswreng/Skills";
 var AgentsSkillsDir = Root / ".agents/skills";
 var GitHubBaseUrl = "https://github.com/Tsinswreng";
@@ -19,13 +19,11 @@ async Task SyncOne(string SkillName){
 
 	if (await Exists(RepoDir, Ct)) {
 		await Echo("[pull] " + RepoName, Ct);
-		await using var Pull = X($"git -C \"{RepoDir}\" pull", Ct);
-		await Pull.Out(Ct);
+		await Exe($"git -C \"{RepoDir}\" pull", Ct);
 	}
 	else {
 		await Echo("[clone] " + RepoName + " <- " + RepoUrl, Ct);
-		await using var Clone = X($"git clone \"{RepoUrl}\" \"{RepoDir}\"", Ct);
-		await Clone.Out(Ct);
+		await Exe($"git clone \"{RepoUrl}\" \"{RepoDir}\"", Ct);
 	}
 
 	await SyncSkillContent(RepoDir, RepoName);
@@ -63,8 +61,7 @@ else {
 			continue;
 
 		await Echo("[pull] " + Repo.Name, Ct);
-		await using var Pull = TryX($"git -C \"{Repo.FullName}\" pull", Ct);
-		var PullSucceeded = (await Pull.Out(Ct)).IsSuccess;
+		var PullSucceeded = (await TryExe($"git -C \"{Repo.FullName}\" pull", Ct)).IsSuccess;
 		if (!PullSucceeded)
 			await Echo("[warn] pull failed for " + Repo.Name + ", continuing...", Ct);
 

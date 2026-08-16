@@ -70,6 +70,30 @@ public partial class Sh{
 	/// 创建一条尚未启动、且可由 Ct 取消的命令；Ct 必须作为最后一个位置参数传入。
 	public partial Command TryCmd(str Command, CommandOptions Options, CT Ct);
 
+	/// 執行命令，將 stdout/stderr 寫入此 Shell 的標準輸出與標準錯誤。
+	public partial CommandExit Exe(str Command);
+
+	/// 以輸入或工作目錄設定執行命令，並轉送兩條輸出流。
+	public partial CommandExit Exe(str Command, CommandOptions Options);
+
+	/// 非同步執行命令並轉送兩條輸出流；Ct 必須作為最後一個位置參數。
+	public partial Task<CommandExit> Exe(str Command, CT Ct);
+
+	/// 非同步以可選設定執行命令並轉送兩條輸出流；Ct 必須作為最後一個位置參數。
+	public partial Task<CommandExit> Exe(str Command, CommandOptions Options, CT Ct);
+
+	/// 執行命令並轉送兩條輸出流；非零退出碼回傳 CommandExit，不丟例外。
+	public partial CommandExit TryExe(str Command);
+
+	/// 以可選設定執行命令；非零退出碼回傳 CommandExit，不丟例外。
+	public partial CommandExit TryExe(str Command, CommandOptions Options);
+
+	/// 非同步執行命令；非零退出碼回傳 CommandExit，不丟例外。
+	public partial Task<CommandExit> TryExe(str Command, CT Ct);
+
+	/// 非同步以可選設定執行命令；非零退出碼回傳 CommandExit，不丟例外。
+	public partial Task<CommandExit> TryExe(str Command, CommandOptions Options, CT Ct);
+
 	/// 非同步地将 Source 复制到 Target。
 	/// 读取命令的 Result.Stdout 或 Result.Stderr 会触发命令执行；Source 结束时不会关闭调用方提供的 Target。
 	public partial void Write(Content Target, Content Source);
