@@ -5,7 +5,6 @@ public static partial class ShGlobal{
 	public static Sh Sh{get;set;} = new();
 	public static partial str Pwd();
 	public static partial str CsxDir();
-	public static partial IReadOnlyList<str> Args();
 	public static partial void Echo(str Text);
 	public static partial Task<nil> Echo(str Text, CT Ct);
 	public static partial void Cd(str Path);

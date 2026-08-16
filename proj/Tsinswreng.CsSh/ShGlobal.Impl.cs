@@ -8,7 +8,6 @@ public static partial class ShGlobal{
 	public static Content Null => Sh.Null;
 	public static partial str Pwd(){ return Sh.Pwd(); }
 	public static partial str CsxDir(){ return Sh.CsxDir(); }
-	public static partial IReadOnlyList<str> Args(){ return Sh.Args(); }
 	public static partial void Echo(str Text){ Sh.Echo(Text); }
 	public static partial Task<nil> Echo(str Text, CT Ct){ return Sh.Echo(Text, Ct); }
 	public static partial void Cd(str Path){ Sh.Cd(Path); }

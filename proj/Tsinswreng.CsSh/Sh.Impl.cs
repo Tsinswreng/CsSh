@@ -25,12 +25,6 @@ public partial class Sh{
 		return NormalizePath(System.IO.Path.GetDirectoryName(System.IO.Path.GetFullPath(ScriptPath))!);
 	}
 
-	public partial IReadOnlyList<str> Args() {
-		var AllArgs = Environment.GetCommandLineArgs();
-		var ScriptIndex = Array.FindIndex(AllArgs, Argument => Argument.EndsWith(".csx", StringComparison.OrdinalIgnoreCase));
-		return ScriptIndex < 0 ? AllArgs.Skip(1).ToArray() : AllArgs[(ScriptIndex + 1)..];
-	}
-
 	public partial void Echo(str Text) {
 		Console.Out.WriteLine(Text);
 	}

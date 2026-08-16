@@ -47,7 +47,7 @@ async Task SyncSkillContent(string RepoDir, string RepoName){
 
 await Mkdir(SkillsRepoDir, Ct);
 
-var ScriptArgs = Args();
+var ScriptArgs = Args;
 if (ScriptArgs.Count >= 1) {
 	// 單項模式：dotnet script SyncSkills.csx <skill-short-name>
 	await SyncOne(ScriptArgs[0]);

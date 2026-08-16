@@ -16,10 +16,11 @@ await Rm(SampleDir, Ct);
 await Mkdir(SampleDir, Ct);
 Cd(SampleDir);
 
-// Pwd、CsxDir、Args 與 Echo 是腳本的基本環境 API。
+// Pwd、CsxDir 與 Echo 是 CsSh 提供的腳本基本環境 API。
+// Args 是 dotnet-script 注入的全域腳本參數，不由 CsSh 包裝。
 await Echo("pwd: " + Pwd(), Ct);
 await Echo("script dir: " + CsxDir(), Ct);
-await Echo("argument count: " + Args().Count, Ct);
+await Echo("argument count: " + Args.Count, Ct);
 
 // 環境變數由當前腳本進程持有；之後才啟動的 X 命令也會繼承它。
 SetEnv("CSSH_SAMPLE", "1");

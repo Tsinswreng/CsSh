@@ -27,9 +27,6 @@ public partial class Sh{
 	/// 返回路径统一使用正斜杠。
 	public partial str CsxDir();
 
-	/// 取得传给当前 csx 脚本的命令行参数，不包含 dotnet-script 自身参数和脚本路径。
-	public partial IReadOnlyList<str> Args();
-
 	/// 同步输出一行文本到标准输出，等价于 Bash 的 echo。
 	public partial void Echo(str Text);
 
