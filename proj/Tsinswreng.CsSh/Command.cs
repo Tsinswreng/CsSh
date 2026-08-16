@@ -39,6 +39,10 @@ public sealed partial class Command:IDisposable,IAsyncDisposable{
 	/// 非同步消費命令結果：分別指定 stdout 與 stderr 的輸出目標，並等待命令退出。
 	public partial Task<CommandExit> Out(Content Stdout, Content Stderr, CT Ct);
 
+	/// 完整讀取 stdout 與 stderr 文字，並等待命令退出。
+	/// 這是終端消費操作，適用於 JSON、版本資訊等有限輸出；大量輸出應直接消費 Result 中的 Content 流。
+	public partial Task<CommandTextResult> Text(CT Ct);
+
 	/// 释放结果流的临时资源；进程尚未结束时同时终止该进程。
 	public partial void Dispose();
 
@@ -69,6 +73,13 @@ public sealed record CommandRunOptions(
 public sealed record CommandResult(
 	Content Stdout,
 	Content Stderr);
+
+/// 完整消費命令文字輸出後取得的結構化結果。
+/// Stdout 與 Stderr 各自保留，Exit 保留退出碼、耗時與成功狀態。
+public sealed record CommandTextResult(
+	str Stdout,
+	str Stderr,
+	CommandExit Exit);
 
 /// 子进程退出后的结构化结果。
 public sealed record CommandExit(

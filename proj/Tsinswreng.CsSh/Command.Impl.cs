@@ -56,6 +56,14 @@ public sealed partial class Command{
 		return await Done.ConfigureAwait(false);
 	}
 
+	public async partial Task<CommandTextResult> Text(CT Ct) {
+		// Start both readers before waiting: either pipe can otherwise block a verbose child process.
+		var Stdout = Result.Stdout.Text(Ct);
+		var Stderr = Result.Stderr.Text(Ct);
+		await Task.WhenAll(Stdout, Stderr, Done).ConfigureAwait(false);
+		return new(await Stdout.ConfigureAwait(false), await Stderr.ConfigureAwait(false), await Done.ConfigureAwait(false));
+	}
+
 	/// Keeps a single output target safe from concurrent stdout/stderr writes.
 	private async Task<CommandExit> Out(IReadOnlyList<Content> Targets, CT Ct) {
 		await Task.WhenAll(

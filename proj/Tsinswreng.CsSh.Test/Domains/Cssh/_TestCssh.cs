@@ -16,6 +16,7 @@ public partial class TestCssh:ITester{
 		RegisterLsAndFind(Node);
 		RegisterReadAndWrite(Node);
 		RegisterX(Node);
+		RegisterText(Node);
 		RegisterTryX(Node);
 		return Node;
 	}
