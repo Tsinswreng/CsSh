@@ -16,18 +16,35 @@ public static partial class ShGlobal{
 	public static partial Command Cmd(str Command, CommandOptions Options){ return Sh.Cmd(Command, Options); }
 	public static partial Command Cmd(str Command, in CT Ct){ return Sh.Cmd(Command, Ct); }
 	public static partial Command Cmd(str Command, CommandOptions Options, CT Ct){ return Sh.Cmd(Command, Options, Ct); }
+	public static partial Command Cmd(str Exe, IList<str> Args){ return Sh.Cmd(Exe, Args); }
+	public static partial Command Cmd(str Exe, IList<str> Args, CommandOptions Options){ return Sh.Cmd(Exe, Args, Options); }
+	public static partial Command Cmd(str Exe, IList<str> Args, CT Ct){ return Sh.Cmd(Exe, Args, Ct); }
+	public static partial Command Cmd(str Exe, IList<str> Args, CommandOptions Options, CT Ct){ return Sh.Cmd(Exe, Args, Options, Ct); }
 	public static partial Command TryCmd(str Command){ return Sh.TryCmd(Command); }
 	public static partial Command TryCmd(str Command, CommandOptions Options){ return Sh.TryCmd(Command, Options); }
 	public static partial Command TryCmd(str Command, in CT Ct){ return Sh.TryCmd(Command, Ct); }
 	public static partial Command TryCmd(str Command, CommandOptions Options, CT Ct){ return Sh.TryCmd(Command, Options, Ct); }
+	public static partial Command TryCmd(str Exe, IList<str> Args){ return Sh.TryCmd(Exe, Args); }
+	public static partial Command TryCmd(str Exe, IList<str> Args, CommandOptions Options){ return Sh.TryCmd(Exe, Args, Options); }
+	public static partial Command TryCmd(str Exe, IList<str> Args, CT Ct){ return Sh.TryCmd(Exe, Args, Ct); }
+	public static partial Command TryCmd(str Exe, IList<str> Args, CommandOptions Options, CT Ct){ return Sh.TryCmd(Exe, Args, Options, Ct); }
 	public static partial CommandExit Exe(str Command){ return Sh.Exe(Command); }
 	public static partial CommandExit Exe(str Command, CommandOptions Options){ return Sh.Exe(Command, Options); }
 	public static partial Task<CommandExit> Exe(str Command, CT Ct){ return Sh.Exe(Command, Ct); }
 	public static partial Task<CommandExit> Exe(str Command, CommandOptions Options, CT Ct){ return Sh.Exe(Command, Options, Ct); }
+	public static partial CommandExit Exe(str Exe, IList<str> Args){ return Sh.Exe(Exe, Args); }
+	public static partial CommandExit Exe(str Exe, IList<str> Args, CommandOptions Options){ return Sh.Exe(Exe, Args, Options); }
+	public static partial Task<CommandExit> Exe(str Exe, IList<str> Args, CT Ct){ return Sh.Exe(Exe, Args, Ct); }
+	public static partial Task<CommandExit> Exe(str Exe, IList<str> Args, CommandOptions Options, CT Ct){ return Sh.Exe(Exe, Args, Options, Ct); }
 	public static partial CommandExit TryExe(str Command){ return Sh.TryExe(Command); }
 	public static partial CommandExit TryExe(str Command, CommandOptions Options){ return Sh.TryExe(Command, Options); }
 	public static partial Task<CommandExit> TryExe(str Command, CT Ct){ return Sh.TryExe(Command, Ct); }
 	public static partial Task<CommandExit> TryExe(str Command, CommandOptions Options, CT Ct){ return Sh.TryExe(Command, Options, Ct); }
+	public static partial CommandExit TryExe(str Exe, IList<str> Args){ return Sh.TryExe(Exe, Args); }
+	public static partial CommandExit TryExe(str Exe, IList<str> Args, CommandOptions Options){ return Sh.TryExe(Exe, Args, Options); }
+	public static partial Task<CommandExit> TryExe(str Exe, IList<str> Args, CT Ct){ return Sh.TryExe(Exe, Args, Ct); }
+	public static partial Task<CommandExit> TryExe(str Exe, IList<str> Args, CommandOptions Options, CT Ct){ return Sh.TryExe(Exe, Args, Options, Ct); }
+	public static partial str Q(str Value){ return Sh.Q(Value); }
 	public static partial void Write(Content Target, Content Source){ Sh.Write(Target, Source); }
 	public static partial Task<nil> Write(Content Target, Content Source, CT Ct){ return Sh.Write(Target, Source, Ct); }
 	public static partial void Write(Content Target, IReadOnlyList<Content> Sources){ Sh.Write(Target, Sources); }

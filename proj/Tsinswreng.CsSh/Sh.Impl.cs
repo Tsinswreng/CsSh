@@ -1,3 +1,5 @@
+using System.Text;
+
 namespace Tsinswreng.CsSh;
 
 public partial class Sh{
@@ -46,7 +48,7 @@ public partial class Sh{
 	}
 
 	public partial Command Cmd(str Command) {
-		return Cmd(Command, new(), CancellationToken.None);
+		return Cmd(Command, new CommandOptions(), CancellationToken.None);
 	}
 
 	public partial Command Cmd(str Command, CommandOptions Options) {
@@ -54,16 +56,38 @@ public partial class Sh{
 	}
 
 	public partial Command Cmd(str Command, in CT Ct) {
-		return Cmd(Command, new(), Ct);
+		return Cmd(Command, new CommandOptions(), Ct);
 	}
 
 	public partial Command Cmd(str Command, CommandOptions Options, CT Ct) {
 		var Cwd = NormalizeFileSystemPath(Options.Cwd ?? CurrentDirectory);
-		return new(new(Command, Options, Cwd, Stdout, Stderr, Ct, true));
+		var FirstSpace = Command.IndexOfAny([' ', '\t']);
+		var Exe = FirstSpace < 0 ? Command : Command[..FirstSpace];
+		var RawArgs = FirstSpace < 0 ? "" : Command[(FirstSpace + 1)..].TrimStart();
+		return new(new(Exe, RawArgs, null, Options, Cwd, Stdout, Stderr, Ct, true));
+	}
+
+	public partial Command Cmd(str Exe, IList<str> Args) {
+		return Cmd(Exe, Args, new CommandOptions(), CancellationToken.None);
+	}
+
+	public partial Command Cmd(str Exe, IList<str> Args, CommandOptions Options) {
+		return Cmd(Exe, Args, Options, CancellationToken.None);
+	}
+
+	public partial Command Cmd(str Exe, IList<str> Args, CT Ct) {
+		return Cmd(Exe, Args, new CommandOptions(), Ct);
+	}
+
+	public partial Command Cmd(str Exe, IList<str> Args, CommandOptions Options, CT Ct) {
+		ArgumentException.ThrowIfNullOrWhiteSpace(Exe);
+		ArgumentNullException.ThrowIfNull(Args);
+		var Cwd = NormalizeFileSystemPath(Options.Cwd ?? CurrentDirectory);
+		return new(new(Exe, null, Args.ToArray(), Options, Cwd, Stdout, Stderr, Ct, true));
 	}
 
 	public partial Command TryCmd(str Command) {
-		return TryCmd(Command, new(), CancellationToken.None);
+		return TryCmd(Command, new CommandOptions(), CancellationToken.None);
 	}
 
 	public partial Command TryCmd(str Command, CommandOptions Options) {
@@ -71,12 +95,34 @@ public partial class Sh{
 	}
 
 	public partial Command TryCmd(str Command, in CT Ct) {
-		return TryCmd(Command, new(), Ct);
+		return TryCmd(Command, new CommandOptions(), Ct);
 	}
 
 	public partial Command TryCmd(str Command, CommandOptions Options, CT Ct) {
 		var Cwd = NormalizeFileSystemPath(Options.Cwd ?? CurrentDirectory);
-		return new(new(Command, Options, Cwd, Stdout, Stderr, Ct, false));
+		var FirstSpace = Command.IndexOfAny([' ', '\t']);
+		var Exe = FirstSpace < 0 ? Command : Command[..FirstSpace];
+		var RawArgs = FirstSpace < 0 ? "" : Command[(FirstSpace + 1)..].TrimStart();
+		return new(new(Exe, RawArgs, null, Options, Cwd, Stdout, Stderr, Ct, false));
+	}
+
+	public partial Command TryCmd(str Exe, IList<str> Args) {
+		return TryCmd(Exe, Args, new CommandOptions(), CancellationToken.None);
+	}
+
+	public partial Command TryCmd(str Exe, IList<str> Args, CommandOptions Options) {
+		return TryCmd(Exe, Args, Options, CancellationToken.None);
+	}
+
+	public partial Command TryCmd(str Exe, IList<str> Args, CT Ct) {
+		return TryCmd(Exe, Args, new CommandOptions(), Ct);
+	}
+
+	public partial Command TryCmd(str Exe, IList<str> Args, CommandOptions Options, CT Ct) {
+		ArgumentException.ThrowIfNullOrWhiteSpace(Exe);
+		ArgumentNullException.ThrowIfNull(Args);
+		var Cwd = NormalizeFileSystemPath(Options.Cwd ?? CurrentDirectory);
+		return new(new(Exe, null, Args.ToArray(), Options, Cwd, Stdout, Stderr, Ct, false));
 	}
 
 	public partial CommandExit Exe(str Command) {
@@ -88,11 +134,28 @@ public partial class Sh{
 	}
 
 	public partial Task<CommandExit> Exe(str Command, CT Ct) {
-		return Exe(Command, new(), Ct);
+		return Exe(Command, new CommandOptions(), Ct);
 	}
 
 	public async partial Task<CommandExit> Exe(str Command, CommandOptions Options, CT Ct) {
 		await using var CommandDto = Cmd(Command, Options, Ct);
+		return await CommandDto.Out(Ct).ConfigureAwait(false);
+	}
+
+	public partial CommandExit Exe(str FileName, IList<str> Args) {
+		return Exe(FileName, Args, new CommandOptions());
+	}
+
+	public partial CommandExit Exe(str FileName, IList<str> Args, CommandOptions Options) {
+		return Exe(FileName, Args, Options, CancellationToken.None).GetAwaiter().GetResult();
+	}
+
+	public partial Task<CommandExit> Exe(str FileName, IList<str> Args, CT Ct) {
+		return Exe(FileName, Args, new CommandOptions(), Ct);
+	}
+
+	public async partial Task<CommandExit> Exe(str FileName, IList<str> Args, CommandOptions Options, CT Ct) {
+		await using var CommandDto = Cmd(FileName, Args, Options, Ct);
 		return await CommandDto.Out(Ct).ConfigureAwait(false);
 	}
 
@@ -105,12 +168,55 @@ public partial class Sh{
 	}
 
 	public partial Task<CommandExit> TryExe(str Command, CT Ct) {
-		return TryExe(Command, new(), Ct);
+		return TryExe(Command, new CommandOptions(), Ct);
 	}
 
 	public async partial Task<CommandExit> TryExe(str Command, CommandOptions Options, CT Ct) {
 		await using var CommandDto = TryCmd(Command, Options, Ct);
 		return await CommandDto.Out(Ct).ConfigureAwait(false);
+	}
+
+	public partial CommandExit TryExe(str FileName, IList<str> Args) {
+		return TryExe(FileName, Args, new CommandOptions());
+	}
+
+	public partial CommandExit TryExe(str FileName, IList<str> Args, CommandOptions Options) {
+		return TryExe(FileName, Args, Options, CancellationToken.None).GetAwaiter().GetResult();
+	}
+
+	public partial Task<CommandExit> TryExe(str FileName, IList<str> Args, CT Ct) {
+		return TryExe(FileName, Args, new CommandOptions(), Ct);
+	}
+
+	public async partial Task<CommandExit> TryExe(str FileName, IList<str> Args, CommandOptions Options, CT Ct) {
+		await using var CommandDto = TryCmd(FileName, Args, Options, Ct);
+		return await CommandDto.Out(Ct).ConfigureAwait(false);
+	}
+
+	public partial str Q(str Value) {
+		ArgumentNullException.ThrowIfNull(Value);
+		var Result = new StringBuilder("\"");
+		var BackslashCount = 0;
+		foreach (var Character in Value) {
+			if (Character == '\\') {
+				BackslashCount++;
+				continue;
+			}
+			if (Character == '"') {
+				// A quote needs its preceding backslashes doubled, plus one escaping backslash.
+				Result.Append('\\', BackslashCount * 2 + 1);
+				Result.Append(Character);
+				BackslashCount = 0;
+				continue;
+			}
+			Result.Append('\\', BackslashCount);
+			Result.Append(Character);
+			BackslashCount = 0;
+		}
+		// Backslashes before the closing quote must also be doubled.
+		Result.Append('\\', BackslashCount * 2);
+		Result.Append('"');
+		return Result.ToString();
 	}
 
 	public partial void Write(Content Target, Content Source) {

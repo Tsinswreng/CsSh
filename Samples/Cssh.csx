@@ -47,6 +47,13 @@ await foreach (var Item in Find("input/**/*.txt", Ct))
 // Exe 是一般命令入口：立即執行並把兩條輸出流寫回終端。
 await Exe("dotnet --version", Ct);
 
+// 可執行檔與參數列表分開時，每一項就是一個參數，不必自行加引號或處理跳脫。
+await Exe("dotnet", ["--version"], Ct);
+
+// 保留單一命令字串的寫法時，用 Q 將含空白、引號或結尾反斜槓的值轉為一個參數。
+var QuotedPath = Q("a path with spaces");
+await Echo("quoted raw-command argument: " + QuotedPath, Ct);
+
 // TryExe 對非零退出碼不丟例外，仍非同步取得結構化退出結果。
 var GitProbe = await TryExe("git rev-parse --is-inside-work-tree", Ct);
 await Echo("git probe success: " + GitProbe.IsSuccess, Ct);
@@ -66,7 +73,7 @@ await using (var History = TryCmd("git log -1 --oneline", Ct)) {
 
 // Read 回傳 Content，既可直接作 CommandOptions.Input，也可隱式取出普通 Stream。
 await using (Content Input = await Read("input/message.txt", Ct)) {
-	await using var Hash = Cmd("git hash-object --stdin", new(Input), Ct);
+	await using var Hash = Cmd("git hash-object --stdin", new CommandOptions(Input), Ct);
 	await Hash.Out(Ct);
 }
 

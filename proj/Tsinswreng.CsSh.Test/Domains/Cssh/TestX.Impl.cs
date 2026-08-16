@@ -13,6 +13,8 @@ public partial class TestCssh{
 		Register(nameof(OutWritesCommandOutput), OutWritesCommandOutput!);
 		Register(nameof(OutWritesCommandOutputToPath), OutWritesCommandOutputToPath!);
 		Register(nameof(ExeWritesDefaultOutput), ExeWritesDefaultOutput!);
+		Register(nameof(CmdArgumentListNeedsNoEscaping), CmdArgumentListNeedsNoEscaping!);
+		Register(nameof(QQuotesCommandStringArgument), QQuotesCommandStringArgument!);
 	}
 
 	/// Observing Done starts the lazy process; stdout remains consumable after it exits.
@@ -31,7 +33,7 @@ public partial class TestCssh{
 		using var CtSource = new CancellationTokenSource();
 		var Ct = CtSource.Token;
 		Content Input = "stream-input";
-		await using var Command = ShGlobal.Cmd("dotnet --version", new(Input), Ct);
+		await using var Command = ShGlobal.Cmd("dotnet --version", new CommandOptions(Input), Ct);
 		var Exit = await Command.Done;
 		Assert.IsTrue(Exit.IsSuccess);
 		return null;
@@ -77,6 +79,23 @@ public partial class TestCssh{
 		var Exit = await ShGlobal.Exe("dotnet --version", CtSource.Token);
 		Assert.IsTrue(Exit.IsSuccess);
 		return null;
+	}
+
+	/// ArgumentList bypasses the raw command-line parser, so one list element always arrives as one argument.
+	public async partial Task<object?> CmdArgumentListNeedsNoEscaping(object? O) {
+		using var CtSource = new CancellationTokenSource();
+		var Ct = CtSource.Token;
+		await using var Command = ShGlobal.Cmd("dotnet", ["--version"], Ct);
+		Assert.IsTrue((await Command.Done).IsSuccess);
+		return null;
+	}
+
+	/// Q wraps a raw string command argument with escaping for quotes and backslashes.
+	public partial Task<object?> QQuotesCommandStringArgument(object? O) {
+		var Value = "a b\\c\"d";
+		Assert.IsTrue(ShGlobal.Q(Value) == "\"a b\\c\\\"d\"");
+		Assert.IsTrue(ShGlobal.Q("tail\\") == "\"tail\\\\\"");
+		return Task.FromResult<object?>(null);
 	}
 }
 

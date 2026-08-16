@@ -130,21 +130,25 @@ public sealed partial class Command{
 	}
 
 	private ProcessStartInfo MakeStartInfo() {
-		var FirstSpace = Options.Text.IndexOfAny([' ', '\t']);
-		var Program = FirstSpace < 0 ? Options.Text : Options.Text[..FirstSpace];
-		var Arguments = FirstSpace < 0 ? "" : Options.Text[(FirstSpace + 1)..].TrimStart();
-		if (string.IsNullOrWhiteSpace(Program))
+		if (string.IsNullOrWhiteSpace(Options.Exe))
 			throw new ArgumentException("Command cannot be empty.", nameof(Options));
 
-		return new(){
-			FileName = Program,
-			Arguments = Arguments,
+		var Result = new ProcessStartInfo{
+			FileName = Options.Exe,
 			WorkingDirectory = Options.Cwd,
 			UseShellExecute = false,
 			RedirectStandardInput = Options.Options.Input is not null,
 			RedirectStandardOutput = true,
 			RedirectStandardError = true,
 		};
+		if (Options.Args is not null) {
+			foreach (var Arg in Options.Args)
+				Result.ArgumentList.Add(Arg);
+		}
+		else {
+			Result.Arguments = Options.RawArgs ?? "";
+		}
+		return Result;
 	}
 
 	private async Task CopyInput(Process Process) {

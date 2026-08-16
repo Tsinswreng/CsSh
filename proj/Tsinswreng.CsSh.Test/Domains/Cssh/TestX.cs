@@ -21,5 +21,11 @@ public partial class TestCssh{
 
 	/// Verifies Exe immediately executes and routes its standard output by default.
 	public partial Task<object?> ExeWritesDefaultOutput(object? O);
+
+	/// Verifies an argument list preserves whitespace and embedded quotes without caller escaping.
+	public partial Task<object?> CmdArgumentListNeedsNoEscaping(object? O);
+
+	/// Verifies Q produces one quoted command-string argument.
+	public partial Task<object?> QQuotesCommandStringArgument(object? O);
 }
 

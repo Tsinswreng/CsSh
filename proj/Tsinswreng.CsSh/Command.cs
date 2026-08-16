@@ -54,7 +54,9 @@ public sealed record CommandOptions(
 
 /// Command 的內部執行配置。
 public sealed record CommandRunOptions(
-	str Text,
+	str Exe,
+	str? RawArgs,
+	IReadOnlyList<str>? Args,
 	CommandOptions Options,
 	str Cwd,
 	Content Stdout,
