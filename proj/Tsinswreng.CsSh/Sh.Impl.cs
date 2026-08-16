@@ -26,7 +26,9 @@ public partial class Sh{
 	}
 
 	public partial IReadOnlyList<str> Args() {
-		return Environment.GetCommandLineArgs().Skip(1).ToArray();
+		var AllArgs = Environment.GetCommandLineArgs();
+		var ScriptIndex = Array.FindIndex(AllArgs, Argument => Argument.EndsWith(".csx", StringComparison.OrdinalIgnoreCase));
+		return ScriptIndex < 0 ? AllArgs.Skip(1).ToArray() : AllArgs[(ScriptIndex + 1)..];
 	}
 
 	public partial void Echo(str Text) {
