@@ -9,7 +9,7 @@ public partial class TestCssh{
 	public partial void RegisterX(ITestNode Node) {
 		var Register = Node.MkTestFnRegister(typeof(TestCssh), [typeof(Sh)], [nameof(Sh.X)], "Command").Register;
 		Register(nameof(XStartsWhenDoneIsObservedAndReturnsStdout), XStartsWhenDoneIsObservedAndReturnsStdout!);
-		Register(nameof(XPassesExternalStreamAsStdin), XPassesExternalStreamAsStdin!);
+		Register(nameof(XPassesContentAsStdin), XPassesContentAsStdin!);
 	}
 
 	/// Observing Done starts the lazy process; stdout remains consumable after it exits.
@@ -23,10 +23,12 @@ public partial class TestCssh{
 		return null;
 	}
 
-	/// Command input is configured externally rather than becoming a Command property.
-	public async partial Task<object?> XPassesExternalStreamAsStdin(object? O) {
-		await using var Input = new MemoryStream(Encoding.UTF8.GetBytes("stream-input"));
-		await using var Command = Sh.X("dotnet --version", new(Input));
+	/// Command input is configured externally as Content rather than becoming a Command property.
+	public async partial Task<object?> XPassesContentAsStdin(object? O) {
+		using var CtSource = new CancellationTokenSource();
+		var Ct = CtSource.Token;
+		Content Input = "stream-input";
+		await using var Command = Sh.X("dotnet --version", new(Input), Ct);
 		var Exit = await Command.Done;
 		Assert.IsTrue(Exit.IsSuccess);
 		return null;

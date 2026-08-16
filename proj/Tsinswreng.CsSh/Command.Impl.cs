@@ -17,8 +17,8 @@ public sealed partial class Command{
 	internal partial Command(CommandRunOptions Options) {
 		this.Options = Options;
 		Result = new(
-			new CommandReadStream(StdoutPipe.Reader.AsStream(), EnsureStarted),
-			new CommandReadStream(StderrPipe.Reader.AsStream(), EnsureStarted));
+			new(new CommandReadStream(StdoutPipe.Reader.AsStream(), EnsureStarted), new(LeaveOpen: false)),
+			new(new CommandReadStream(StderrPipe.Reader.AsStream(), EnsureStarted), new(LeaveOpen: false)));
 		ExitTask = ExitSource.Task;
 	}
 
@@ -113,7 +113,7 @@ public sealed partial class Command{
 	private async Task CopyInput(Process Process) {
 		if (Options.Options.Input is null)
 			return;
-		await Options.Options.Input.CopyToAsync(Process.StandardInput.BaseStream, Options.Ct).ConfigureAwait(false);
+		await Options.Options.Input.Stream.CopyToAsync(Process.StandardInput.BaseStream, Options.Ct).ConfigureAwait(false);
 		await Process.StandardInput.BaseStream.DisposeAsync().ConfigureAwait(false);
 	}
 

@@ -157,65 +157,39 @@ public static partial class Sh{
 		}
 	}
 
-	public static partial Stream OpenRead(str Path) {
-		return OpenRead(Path, CancellationToken.None).GetAwaiter().GetResult();
+	public static partial Content Read(str Path) {
+		return Read(Path, CancellationToken.None).GetAwaiter().GetResult();
 	}
 
-	public static partial Task<Stream> OpenRead(str Path, CT Ct) {
+	public static partial Task<Content> Read(str Path, CT Ct) {
 		Ct.ThrowIfCancellationRequested();
 		Stream Result = new FileStream(NormalizeFileSystemPath(Path), FileMode.Open, FileAccess.Read, FileShare.Read, 81920, useAsync: true);
-		return Task.FromResult(Result);
+		return Task.FromResult<Content>(new(Result, new(LeaveOpen: false)));
 	}
 
-	public static partial Stream OpenWrite(str Path) {
-		return OpenWrite(Path, CancellationToken.None).GetAwaiter().GetResult();
+	public static partial void Write(str Path, Content Source) {
+		Write(Path, Source, CancellationToken.None).GetAwaiter().GetResult();
 	}
 
-	public static partial Task<Stream> OpenWrite(str Path, CT Ct) {
-		Ct.ThrowIfCancellationRequested();
+	public static partial async Task<nil> Write(str Path, Content Source, CT Ct) {
+		ArgumentNullException.ThrowIfNull(Source);
 		var FileSystemPath = NormalizeFileSystemPath(Path);
 		EnsureParentDirectory(FileSystemPath);
-		Stream Result = new FileStream(FileSystemPath, FileMode.Create, FileAccess.Write, FileShare.None, 81920, useAsync: true);
-		return Task.FromResult(Result);
+		await using var Target = new FileStream(FileSystemPath, FileMode.Create, FileAccess.Write, FileShare.None, 81920, useAsync: true);
+		await Source.Stream.CopyToAsync(Target, Ct).ConfigureAwait(false);
+		return NIL;
 	}
 
-	public static partial Stream OpenAppend(str Path) {
-		return OpenAppend(Path, CancellationToken.None).GetAwaiter().GetResult();
+	public static partial void Append(str Path, Content Source) {
+		Append(Path, Source, CancellationToken.None).GetAwaiter().GetResult();
 	}
 
-	public static partial Task<Stream> OpenAppend(str Path, CT Ct) {
-		Ct.ThrowIfCancellationRequested();
+	public static partial async Task<nil> Append(str Path, Content Source, CT Ct) {
+		ArgumentNullException.ThrowIfNull(Source);
 		var FileSystemPath = NormalizeFileSystemPath(Path);
 		EnsureParentDirectory(FileSystemPath);
-		Stream Result = new FileStream(FileSystemPath, FileMode.Append, FileAccess.Write, FileShare.None, 81920, useAsync: true);
-		return Task.FromResult(Result);
-	}
-
-	public static partial str Read(str Path, Encoding? Encoding) {
-		return Read(Path, Encoding, CancellationToken.None).GetAwaiter().GetResult();
-	}
-
-	public static partial Task<str> Read(str Path, CT Ct) {
-		return Read(Path, null, Ct);
-	}
-
-	public static partial async Task<str> Read(str Path, Encoding? Encoding, CT Ct) {
-		return await File.ReadAllTextAsync(NormalizeFileSystemPath(Path), Encoding ?? Encoding.UTF8, Ct).ConfigureAwait(false);
-	}
-
-	public static partial void Write(str Path, str Content, TextWriteOptions? Options) {
-		Write(Path, Content, Options, CancellationToken.None).GetAwaiter().GetResult();
-	}
-
-	public static partial Task<nil> Write(str Path, str Content, CT Ct) {
-		return Write(Path, Content, null, Ct);
-	}
-
-	public static partial async Task<nil> Write(str Path, str Content, TextWriteOptions? Options, CT Ct) {
-		var FileSystemPath = NormalizeFileSystemPath(Path);
-		if (Options?.CreateParentDirectory ?? true)
-			EnsureParentDirectory(FileSystemPath);
-		await File.WriteAllTextAsync(FileSystemPath, Content, Options?.Encoding ?? Encoding.UTF8, Ct).ConfigureAwait(false);
+		await using var Target = new FileStream(FileSystemPath, FileMode.Append, FileAccess.Write, FileShare.None, 81920, useAsync: true);
+		await Source.Stream.CopyToAsync(Target, Ct).ConfigureAwait(false);
 		return NIL;
 	}
 

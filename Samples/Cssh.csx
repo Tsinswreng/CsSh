@@ -1,4 +1,4 @@
-// Cssh 完整 API 樣本。
+// CsSh 完整 API 樣本。
 // 以 dotnet-script 執行時，引用已發布的 Tsinswreng.CsSh 程序集：
 // #r "path/to/Tsinswreng.CsSh.dll"
 
@@ -38,9 +38,10 @@ UnsetEnv("CSSH_SAMPLE");
 
 // Mkdir、Write、Read、Cp、Mv、Rm 均為非同步檔案操作。
 await Mkdir("input", Ct);
-await Write("input/message.txt", "Cssh stream input\n", Ct);
-var Message = await Read("input/message.txt", Ct);
-await Echo("read: " + Message.Trim(), Ct);
+await Write("input/message.txt", "CsSh Content input\n", Ct);
+await using (Content Message = await Read("input/message.txt", Ct)) {
+	await Echo("read: " + (await Message.Text(Ct)).Trim(), Ct);
+}
 await Cp("input/message.txt", "input/copy.txt", Ct);
 await Mv("input/copy.txt", "input/moved.txt", Ct);
 await Rm("input/moved.txt", Ct);
@@ -60,25 +61,21 @@ await XTerm(X("dotnet --version", Ct));
 var GitProbe = await XTerm(TryX("git rev-parse --is-inside-work-tree", Ct));
 await Echo("git probe success: " + GitProbe.IsSuccess, Ct);
 
-// OpenWrite 對應 >：stdout 和 stderr 安全合併寫入同一檔案。
-await using (var StatusLog = await OpenWrite("git-status.log", Ct)) {
-	await using var Status = TryX("git status --short", Ct);
-	await Task.WhenAll(
-		Write(StatusLog, [Status.Result.Stdout, Status.Result.Stderr], Ct),
-		Status.Done);
+// Write 對應 >、Append 對應 >>；命令結果本身就是 Content，可直接成為來源。
+await using (var Status = TryX("git status --short", Ct)) {
+	await Write("git-status.log", Status.Result.Stdout, Ct);
+	await Append("git-status.log", Status.Result.Stderr, Ct);
+	await Status.Done;
 }
 
-// OpenAppend 對應 >>：輸出附加到既有檔案。
-await using (var HistoryLog = await OpenAppend("history.log", Ct)) {
-	await using var History = TryX("git log -1 --oneline", Ct);
-	await Task.WhenAll(
-		Write(HistoryLog, History.Result.Stdout, Ct),
-		Write(Stderr, History.Result.Stderr, Ct),
-		History.Done);
+await using (var History = TryX("git log -1 --oneline", Ct)) {
+	await Write("history.log", History.Result.Stdout, Ct);
+	await Write(Stderr, History.Result.Stderr, Ct);
+	await History.Done;
 }
 
-// OpenRead 提供外部 stdin；git hash-object --stdin 讀取檔案 Stream 後產生 hash。
-await using (var Input = await OpenRead("input/message.txt", Ct)) {
+// Read 回傳 Content，既可直接作 CommandOptions.Input，也可隱式取出普通 Stream。
+await using (Content Input = await Read("input/message.txt", Ct)) {
 	await using var Hash = X("git hash-object --stdin", new(Input), Ct);
 	await Task.WhenAll(
 		Write(Stdout, Hash.Result.Stdout, Ct),
@@ -86,7 +83,7 @@ await using (var Input = await OpenRead("input/message.txt", Ct)) {
 		Hash.Done);
 }
 
-// 命令管道不解析 |：下游命令的 Input 直接指向上游 Command 的 stdout Stream。
+// 命令管道不解析 |：下游命令的 Input 直接指向上游 Command 的 stdout Content。
 await using var Log = X("git log --oneline", Ct);
 await using var LogHash = X("git hash-object --stdin", new(Log.Result.Stdout), Ct);
 await Task.WhenAll(
@@ -105,5 +102,5 @@ await using (var Version = X("dotnet --info", Ct)) {
 }
 
 Cd(StartDir);
-await Echo("Cssh complete sample finished.", Ct);
+await Echo("CsSh complete sample finished.", Ct);
 

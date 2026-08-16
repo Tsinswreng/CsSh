@@ -1,4 +1,4 @@
-// Cssh 版 solution 更新腳本，對應倉庫根目錄的 UpdSln.sh。
+// CsSh 版 solution 更新腳本，對應倉庫根目錄的 UpdSln.sh。
 // #r "path/to/Tsinswreng.CsSh.dll"
 
 using Tsinswreng.CsSh;

@@ -19,7 +19,9 @@ public partial class TestCssh{
 			Sh.Mkdir(Root + "/source/empty");
 			Sh.Write(Root + "/source/content/data.txt", "copied");
 			Sh.Cp(Root + "/source", Root + "/destination");
-			Assert.IsTrue(Sh.Read(Root + "/destination/content/data.txt") == "copied");
+			using (Content Copied = Sh.Read(Root + "/destination/content/data.txt")) {
+				Assert.IsTrue((string)Copied == "copied");
+			}
 			Assert.IsTrue(Sh.Exists(Root + "/destination/empty"));
 		}
 		finally {
@@ -35,7 +37,9 @@ public partial class TestCssh{
 			Sh.Write(Root + "/source.txt", "moved");
 			Sh.Mv(Root + "/source.txt", Root + "/deep/path/destination.txt");
 			Assert.IsTrue(!Sh.Exists(Root + "/source.txt"));
-			Assert.IsTrue(Sh.Read(Root + "/deep/path/destination.txt") == "moved");
+			using (Content Moved = Sh.Read(Root + "/deep/path/destination.txt")) {
+				Assert.IsTrue((string)Moved == "moved");
+			}
 		}
 		finally {
 			TestSupport.Clean(Root);
@@ -51,7 +55,9 @@ public partial class TestCssh{
 			await Sh.Write(Root + "/source.txt", "async", Source.Token);
 			await Sh.Cp(Root + "/source.txt", Root + "/copy.txt", Source.Token);
 			await Sh.Mv(Root + "/copy.txt", Root + "/moved.txt", Source.Token);
-			Assert.IsTrue(await Sh.Read(Root + "/moved.txt", Source.Token) == "async");
+			await using (Content Moved = await Sh.Read(Root + "/moved.txt", Source.Token)) {
+				Assert.IsTrue(await Moved.Text(Source.Token) == "async");
+			}
 		}
 		finally {
 			TestSupport.Clean(Root);

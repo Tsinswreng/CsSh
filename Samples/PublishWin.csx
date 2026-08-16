@@ -1,4 +1,4 @@
-// Cssh 版 Windows 發布腳本。
+// CsSh 版 Windows 發布腳本。
 // dotnet-script 使用時引用已發布的 Tsinswreng.CsSh 程序集：
 // #r "path/to/Tsinswreng.CsSh.dll"
 

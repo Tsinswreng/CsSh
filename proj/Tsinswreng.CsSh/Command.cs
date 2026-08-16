@@ -36,7 +36,7 @@ public sealed partial class Command:IDisposable,IAsyncDisposable{
 /// 建立 Command 時的可選配置。
 /// Input 為命令的外部標準輸入來源；Cwd 指定子進程工作目錄。
 public sealed record CommandOptions(
-	Stream? Input = null,
+	Content? Input = null,
 	str? Cwd = null);
 
 /// Command 的內部執行配置。
@@ -49,8 +49,8 @@ internal sealed record CommandRunOptions(
 /// Command 产生的标准输出。
 /// 两条 Stream 均为只读、惰性流：首次 ReadAsync 会启动所属命令；数据边产生边可读，不预先全部载入内存。
 public sealed record CommandResult(
-	Stream Stdout,
-	Stream Stderr);
+	Content Stdout,
+	Content Stderr);
 
 /// 子进程退出后的结构化结果。
 public sealed record CommandExit(

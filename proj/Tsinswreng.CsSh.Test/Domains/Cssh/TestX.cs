@@ -10,7 +10,7 @@ public partial class TestCssh{
 	/// Verifies Done starts X and stdout remains consumable after exit.
 	public partial Task<object?> XStartsWhenDoneIsObservedAndReturnsStdout(object? O);
 
-	/// Verifies external input streams are supplied through CommandOptions.
-	public partial Task<object?> XPassesExternalStreamAsStdin(object? O);
+	/// Verifies Content input is supplied through CommandOptions.
+	public partial Task<object?> XPassesContentAsStdin(object? O);
 }
 

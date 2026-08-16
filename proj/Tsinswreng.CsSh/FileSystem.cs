@@ -1,5 +1,3 @@
-using System.Text;
-
 namespace Tsinswreng.CsSh;
 
 /// 由 Ls 或 Find 列出的一个文件系统项目。
@@ -23,11 +21,6 @@ public sealed record MvOptions(
 /// Ls 的可选行为。
 public sealed record LsOptions(
 	bool Recursive = false);
-
-/// 文本写入的可选行为。
-public sealed record TextWriteOptions(
-	Encoding? Encoding = null,
-	bool CreateParentDirectory = true);
 
 /// 供 csx 构建脚本直接静态导入的文件系统动词。
 /// 每个路径均由 .NET 负责平台适配，不依赖 Bash、PowerShell 或外部 coreutils。
@@ -88,39 +81,23 @@ public static partial class Sh{
 	/// 异步列出目录中的子项；需要递归列出时传入 Options；Ct 必须作为最后一个位置参数传入。
 	public static partial IAsyncEnumerable<FileSystemEntry> Ls(str? Path, LsOptions? Options, CT Ct);
 
-	/// 异步打开一个只读文件流。
-	public static partial Stream OpenRead(str Path);
+	/// 讀取檔案為 Content；呼叫方可將結果隱式視為 string 或普通 Stream。
+	public static partial Content Read(str Path);
 
-	/// 异步打开只读文件流；Ct 必须作为最后一个位置参数传入。
-	public static partial Task<Stream> OpenRead(str Path, CT Ct);
+	/// 非同步讀取檔案為 Content；Ct 必須作為最後一個位置參數傳入。
+	public static partial Task<Content> Read(str Path, CT Ct);
 
-	/// 异步打开或新建一个可覆写的文件流，等价于 > Path。
-	public static partial Stream OpenWrite(str Path);
+	/// 覆寫檔案內容，等價於 > Path。
+	/// Source 接受 Content；string 與普通 Stream 均可隱式轉入 Content。
+	public static partial void Write(str Path, Content Source);
 
-	/// 异步打开可覆写文件流；Ct 必须作为最后一个位置参数传入。
-	public static partial Task<Stream> OpenWrite(str Path, CT Ct);
+	/// 非同步覆寫檔案內容；Ct 必須作為最後一個位置參數傳入。
+	public static partial Task<nil> Write(str Path, Content Source, CT Ct);
 
-	/// 异步打开或新建一个可追加的文件流，等价于 >> Path。
-	public static partial Stream OpenAppend(str Path);
+	/// 追加檔案內容，等價於 >> Path。
+	/// Source 接受 Content；string 與普通 Stream 均可隱式轉入 Content。
+	public static partial void Append(str Path, Content Source);
 
-	/// 异步打开可追加文件流；Ct 必须作为最后一个位置参数传入。
-	public static partial Task<Stream> OpenAppend(str Path, CT Ct);
-
-	/// 以文本方式读取文件。
-	public static partial str Read(str Path, Encoding? Encoding = null);
-
-	/// 异步读取文本文件；Ct 必须作为最后一个位置参数传入。
-	public static partial Task<str> Read(str Path, CT Ct);
-
-	/// 异步读取文本文件；需要指定编码时传入 Encoding；Ct 必须作为最后一个位置参数传入。
-	public static partial Task<str> Read(str Path, Encoding? Encoding, CT Ct);
-
-	/// 写入文本；CreateParentDirectory 为 true 时自动建立父目录。
-	public static partial void Write(str Path, str Content, TextWriteOptions? Options = null);
-
-	/// 异步写入文本文件；Ct 必须作为最后一个位置参数传入。
-	public static partial Task<nil> Write(str Path, str Content, CT Ct);
-
-	/// 异步写入文本文件；需要控制编码或父目录创建时传入 Options；Ct 必须作为最后一个位置参数传入。
-	public static partial Task<nil> Write(str Path, str Content, TextWriteOptions? Options, CT Ct);
+	/// 非同步追加檔案內容；Ct 必須作為最後一個位置參數傳入。
+	public static partial Task<nil> Append(str Path, Content Source, CT Ct);
 }

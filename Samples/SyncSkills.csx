@@ -1,4 +1,4 @@
-// Cssh 版技能同步腳本，對應倉庫根目錄的 SyncSkills.sh。
+// CsSh 版技能同步腳本，對應倉庫根目錄的 SyncSkills.sh。
 // #r "path/to/Tsinswreng.CsSh.dll"
 
 using Tsinswreng.CsSh;

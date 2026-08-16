@@ -3,17 +3,17 @@ namespace Tsinswreng.CsSh;
 /// Cssh 面向 csx 的唯一脚本入口。
 /// 脚本可使用 using static Tsinswreng.CsSh.Sh，直接书写 Cd、X、Mkdir、Rm、Cp、Mv、Ls 与 Find。
 public static partial class Sh{
-	/// 当前脚本进程的标准输入流。
-	public static readonly Stream Stdin = Console.OpenStandardInput();
+	/// 当前脚本进程的标准输入内容。
+	public static readonly Content Stdin = new(Console.OpenStandardInput());
 
-	/// 当前脚本进程的标准输出流。
-	public static readonly Stream Stdout = Console.OpenStandardOutput();
+	/// 当前脚本进程的标准输出内容。
+	public static readonly Content Stdout = new(Console.OpenStandardOutput());
 
-	/// 当前脚本进程的标准错误流。
-	public static readonly Stream Stderr = Console.OpenStandardError();
+	/// 当前脚本进程的标准错误内容。
+	public static readonly Content Stderr = new(Console.OpenStandardError());
 
-	/// 跨平台的空流，等价于 Bash 的 /dev/null 或 Windows 的 NUL。
-	public static readonly Stream Null = Stream.Null;
+	/// 跨平台的空内容目标，等价于 Bash 的 /dev/null 或 Windows 的 NUL。
+	public static readonly Content Null = new(Stream.Null);
 
 	/// 取得当前进程的工作目录。
 	/// 返回路径统一使用正斜杠，因而可直接与 Cssh 的所有路径 API 拼接。
@@ -69,16 +69,16 @@ public static partial class Sh{
 
 	/// 非同步地将 Source 复制到 Target。
 	/// 读取命令的 Result.Stdout 或 Result.Stderr 会触发命令执行；Source 结束时不会关闭调用方提供的 Target。
-	public static partial void Write(Stream Target, Stream Source);
+	public static partial void Write(Content Target, Content Source);
 
 	/// 非同步地将 Source 复制到 Target；Ct 必须作为最后一个位置参数传入。
-	public static partial Task<nil> Write(Stream Target, Stream Source, CT Ct);
+	public static partial Task<nil> Write(Content Target, Content Source, CT Ct);
 
 	/// 非同步合并多条 Source 流并写入同一 Target。
 	/// Cssh 串行化对 Target 的写入，因此可安全实现 stdout 与 stderr 合并，而不并发写同一 Stream。
-	public static partial void Write(Stream Target, IReadOnlyList<Stream> Sources);
+	public static partial void Write(Content Target, IReadOnlyList<Content> Sources);
 
 	/// 非同步合并多条 Source 流并写入同一 Target；Ct 必须作为最后一个位置参数传入。
-	public static partial Task<nil> Write(Stream Target, IReadOnlyList<Stream> Sources, CT Ct);
+	public static partial Task<nil> Write(Content Target, IReadOnlyList<Content> Sources, CT Ct);
 }
 
