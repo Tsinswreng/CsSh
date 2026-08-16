@@ -1,4 +1,3 @@
-﻿using Cs.Test.Domains.Calculator;
 using Microsoft.Extensions.DependencyInjection;
 using Tsinswreng.CsTreeTest;
 
@@ -9,7 +8,7 @@ internal class Program{
 	public static IServiceProvider SvcProvdr = null!;
 	public static async Task Main(string[] args){
 		//SvcColct.SetupMyDi();
-		SvcColct.AddSingleton<ICalculator, Calculator>();
+		// Cssh is a static script library; its tests intentionally require no services.
 
 		var mgr = CsTestMgr.Inst;
 		SvcProvdr = mgr.InitSvc(SvcColct, sc => sc.BuildServiceProvider());

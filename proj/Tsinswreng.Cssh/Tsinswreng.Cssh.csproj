@@ -2,9 +2,12 @@
 
 	<PropertyGroup>
 		<OutputType>Library</OutputType>
+		<!-- C# 14 extension operators used by Cssh require the net10.0 compiler/runtime surface. -->
 		<TargetFramework>net10.0</TargetFramework>
 		<ImplicitUsings>enable</ImplicitUsings>
 		<Nullable>enable</Nullable>
+		<IsAotCompatible>true</IsAotCompatible>
+		<VerifyReferenceAotCompatibility>true</VerifyReferenceAotCompatibility>
 	</PropertyGroup>
 
 </Project>
