@@ -9,6 +9,7 @@ public partial class TestCssh:ITester{
 		Node ??= new TestNode();
 		Node.Ordered = true;
 		Node.IsParallelRecursive = false;
+		RegisterIntegratedWorkflow(Node);
 		RegisterExtnString(Node);
 		RegisterMkdirAndRm(Node);
 		RegisterCpAndMv(Node);
