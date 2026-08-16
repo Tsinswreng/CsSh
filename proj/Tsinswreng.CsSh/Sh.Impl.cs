@@ -45,36 +45,36 @@ public partial class Sh{
 		CurrentDirectory = System.IO.Path.GetFullPath(Candidate).Replace('\\', '/');
 	}
 
-	public partial Command Exe(str Command) {
-		return Exe(Command, new(), CancellationToken.None);
+	public partial Command Cmd(str Command) {
+		return Cmd(Command, new(), CancellationToken.None);
 	}
 
-	public partial Command Exe(str Command, CommandOptions Options) {
-		return Exe(Command, Options, CancellationToken.None);
+	public partial Command Cmd(str Command, CommandOptions Options) {
+		return Cmd(Command, Options, CancellationToken.None);
 	}
 
-	public partial Command Exe(str Command, in CT Ct) {
-		return Exe(Command, new(), Ct);
+	public partial Command Cmd(str Command, in CT Ct) {
+		return Cmd(Command, new(), Ct);
 	}
 
-	public partial Command Exe(str Command, CommandOptions Options, CT Ct) {
+	public partial Command Cmd(str Command, CommandOptions Options, CT Ct) {
 		var Cwd = NormalizeFileSystemPath(Options.Cwd ?? CurrentDirectory);
 		return new(new(Command, Options, Cwd, Stdout, Stderr, Ct, true));
 	}
 
-	public partial Command TryExe(str Command) {
-		return TryExe(Command, new(), CancellationToken.None);
+	public partial Command TryCmd(str Command) {
+		return TryCmd(Command, new(), CancellationToken.None);
 	}
 
-	public partial Command TryExe(str Command, CommandOptions Options) {
-		return TryExe(Command, Options, CancellationToken.None);
+	public partial Command TryCmd(str Command, CommandOptions Options) {
+		return TryCmd(Command, Options, CancellationToken.None);
 	}
 
-	public partial Command TryExe(str Command, in CT Ct) {
-		return TryExe(Command, new(), Ct);
+	public partial Command TryCmd(str Command, in CT Ct) {
+		return TryCmd(Command, new(), Ct);
 	}
 
-	public partial Command TryExe(str Command, CommandOptions Options, CT Ct) {
+	public partial Command TryCmd(str Command, CommandOptions Options, CT Ct) {
 		var Cwd = NormalizeFileSystemPath(Options.Cwd ?? CurrentDirectory);
 		return new(new(Command, Options, Cwd, Stdout, Stderr, Ct, false));
 	}
