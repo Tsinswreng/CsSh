@@ -10,6 +10,8 @@ public partial class TestCssh{
 		var Register = Node.MkTestFnRegister(typeof(TestCssh), [typeof(Sh)], [nameof(Sh.X)], "Command").Register;
 		Register(nameof(XStartsWhenDoneIsObservedAndReturnsStdout), XStartsWhenDoneIsObservedAndReturnsStdout!);
 		Register(nameof(XPassesContentAsStdin), XPassesContentAsStdin!);
+		Register(nameof(OutWritesCommandOutput), OutWritesCommandOutput!);
+		Register(nameof(OutWritesCommandOutputToPath), OutWritesCommandOutputToPath!);
 	}
 
 	/// Observing Done starts the lazy process; stdout remains consumable after it exits.
@@ -31,6 +33,40 @@ public partial class TestCssh{
 		await using var Command = Sh.X("dotnet --version", new(Input), Ct);
 		var Exit = await Command.Done;
 		Assert.IsTrue(Exit.IsSuccess);
+		return null;
+	}
+
+	/// Out starts the command, drains its streams, and leaves an externally owned target readable.
+	public async partial Task<object?> OutWritesCommandOutput(object? O) {
+		using var CtSource = new CancellationTokenSource();
+		var Ct = CtSource.Token;
+		await using var Buffer = new MemoryStream();
+		await using var Output = new Content(Buffer, new(LeaveOpen: true));
+		await using var Command = Sh.X("dotnet --version", Ct);
+
+		var Exit = await Command.Out(Output, Ct);
+		Buffer.Position = 0;
+		var Text = await Output.Text(Ct);
+		Assert.IsTrue(Exit.IsSuccess);
+		Assert.IsTrue(!string.IsNullOrWhiteSpace(Text));
+		return null;
+	}
+
+	/// A file path is the concise Out target for script logs, without manually opening a FileStream.
+	public async partial Task<object?> OutWritesCommandOutputToPath(object? O) {
+		var Root = TestSupport.NewRoot();
+		using var CtSource = new CancellationTokenSource();
+		var Ct = CtSource.Token;
+		try {
+			var Path = Root / "logs/dotnet-version.txt";
+			await using var Command = Sh.X("dotnet --version", Ct);
+			Assert.IsTrue((await Command.Out(Path, Ct)).IsSuccess);
+			await using var Output = await Sh.Read(Path, Ct);
+			Assert.IsTrue(!string.IsNullOrWhiteSpace(await Output.Text(Ct)));
+		}
+		finally {
+			TestSupport.Clean(Root);
+		}
 		return null;
 	}
 }

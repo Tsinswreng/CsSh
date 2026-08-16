@@ -5,46 +5,39 @@
 using Tsinswreng.CsSh;
 using static Tsinswreng.CsSh.Sh;
 
-var Root = Pwd();
+using var CtSource = new CancellationTokenSource();
+var Ct = CtSource.Token;
+var Root = Path.GetFullPath(ScriptDir() / "../..").Replace('\\', '/');
+var ProjectDir = Root / "Ngan.Dict/Ngan.Dict.Frontend/proj/Ngan.Dict.Windows";
 
-// 以終端作為預設的 stdout/stderr 接收端。
-// 命令本身仍是惰性的；只有三個非同步工作開始消費其結果後才會啟動。
-void XTerm(string Text, string? Cwd = null){
-	using var Command = Cwd is null ? X(Text) : X(Text, new(Cwd: Cwd));
-	Task.WhenAll(
-		Task.Run(() => Write(Stdout, Command.Result.Stdout)),
-		Task.Run(() => Write(Stderr, Command.Result.Stderr)),
-		Command.Done).GetAwaiter().GetResult();
-}
+// 先保留上次發布結果；所有路徑都從腳本位置推得，不依賴啟動 cwd。
+var PublishDir = ProjectDir / "bin/Release/net10.0/win-x64/publish";
+var PublishNoPdbDir = ProjectDir / "bin/Release/net10.0/win-x64/publishNoPdb";
+var OldPublishDir = ProjectDir / "publishOld";
+await Rm(OldPublishDir, Ct);
+if (await Exists(PublishDir, Ct))
+	await Mv(PublishDir, OldPublishDir, Ct);
 
-// 先保留上次發布結果；第一次執行時 publish 不存在，直接略過即可。
-Cd("Ngan.Dict/Ngan.Dict.Frontend/proj/Ngan.Dict.Windows");
-Rm("publishOld");
-if (Exists("publish"))
-	Mv("publish", "publishOld");
+await using (var Publish = X(
+	"dotnet publish -c Release -r win-x64 -p:AllowMissingPrunePackageData=true",
+	new(Cwd: ProjectDir), Ct))
+	await Publish.Out(Ct);
+await Rm(OldPublishDir, Ct);
 
-XTerm(
-	"dotnet publish -c Release -r win-x64 " +
-	"-p:AllowMissingPrunePackageData=true");
-
-// 此命令只在根目錄執行，不需要為切換目錄建立或恢復 scope。
-XTerm("sh ./CpAssets.sh", Root);
-
-var ReleaseDir = "bin/Release/net10.0/win-x64";
-var PublishDir = "bin/Release/net10.0/win-x64/publish";
-var PublishNoPdbDir = "bin/Release/net10.0/win-x64/publishNoPdb";
+// 範例只展示外部命令輸出轉送；實際資源同步請執行 Ngan.Dict.Scripts 的 CpAssets 入口。
 
 // 生成一份可分發副本，再刪除符號檔。
-Rm(PublishNoPdbDir);
-Cp(PublishDir, PublishNoPdbDir);
-foreach (var Pdb in Find(PublishNoPdbDir / "**/*.pdb"))
-	Rm(Pdb.Path);
+await Rm(PublishNoPdbDir, Ct);
+await Cp(PublishDir / "*", PublishNoPdbDir, Ct);
+await foreach (var Pdb in Find(PublishNoPdbDir / "**/*.pdb", Ct))
+	await Rm(Pdb.FullName, Ct);
 
 // 壓縮檔暫存在來源目錄外，以免 tar 在掃描來源時把自身打進去。
-var ArchivePath = Root / "Ngan.Dict/Ngan.Dict.Frontend/proj/Ngan.Dict.Windows/bin/Release/net10.0/win-x64/Ngan.Dict.Windows.tar.gz";
-Rm(ArchivePath);
-XTerm($"tar -czf \"{ArchivePath}\" .", PublishNoPdbDir);
-Mv(ArchivePath, "bin/Release/net10.0/win-x64/publishNoPdb/Ngan.Dict.Windows.tar.gz");
+var ArchivePath = ProjectDir / "bin/Release/net10.0/win-x64/Ngan.Dict.Windows.tar.gz";
+await Rm(ArchivePath, Ct);
+await using (var Archive = X($"tar -czf \"{ArchivePath}\" .", new(Cwd: PublishNoPdbDir), Ct))
+	await Archive.Out(Ct);
+await Mv(ArchivePath, PublishNoPdbDir / "Ngan.Dict.Windows.tar.gz", Ct);
 
-Echo("Windows publish completed.");
+await Echo("Windows publish completed.", Ct);
 

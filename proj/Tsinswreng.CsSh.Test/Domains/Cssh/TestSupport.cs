@@ -2,11 +2,11 @@ using Tsinswreng.CsSh;
 
 namespace Tsinswreng.CsSh.Test.Domains.CsSh;
 
-/// Keeps test artefacts outside the repository and gives every case a collision-free root.
+/// Keeps every temporary test artefact beneath the test entry in the workspace.
 internal static class TestSupport{
-	/// Creates a unique path without creating it, so Mkdir itself is still tested.
+	/// Creates a unique entry-side path without creating it, so Mkdir itself is still tested.
 	internal static string NewRoot() {
-		return Path.Combine(Path.GetTempPath(), "Cssh-Test-" + Guid.NewGuid().ToString("N")).Replace('\\', '/');
+		return (AppContext.BaseDirectory / "CsSh.Test-" + Guid.NewGuid().ToString("N"));
 	}
 
 	/// Removes test data even after an assertion failure; Rm is intentionally idempotent.

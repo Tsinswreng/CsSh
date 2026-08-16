@@ -15,5 +15,8 @@ public partial class TestCssh{
 
 	/// Verifies concise asynchronous Cp and Mv overloads.
 	public partial Task<object?> AsyncCpAndMvNeedNoNullOptions(object? O);
+
+	/// Verifies a source glob copies its matches as destination children rather than nesting the source directory.
+	public partial Task<object?> CpGlobCopiesSourceContents(object? O);
 }
 

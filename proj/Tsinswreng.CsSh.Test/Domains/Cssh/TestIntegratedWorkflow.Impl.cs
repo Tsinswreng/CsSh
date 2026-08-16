@@ -72,11 +72,10 @@ public partial class TestCssh{
 				T((string)StreamCopyContent == "CsSh integration");
 			}
 
-			// Command output is Content too, so it can be written straight to a file with no XOut or stream-specific overload.
+			// Command output is Content too; Out routes both streams and awaits completion without a helper API.
 			var VersionFile = IntegratedRoot / "output" / "dotnet-version.txt";
 			await using (var Version = X("dotnet --version", Ct)) {
-				await Write(VersionFile, Version.Result.Stdout, Ct);
-				T((await Version.Done).IsSuccess);
+				T((await Version.Out(VersionFile, Ct)).IsSuccess);
 			}
 			await using (Content VersionContent = await Read(VersionFile, Ct)) {
 				T(!string.IsNullOrWhiteSpace(await VersionContent.Text(Ct)));

@@ -23,8 +23,21 @@ public sealed partial class Command:IDisposable,IAsyncDisposable{
 	private readonly Task<CommandExit> ExitTask;
 
 	/// 让 await Command 等价于 await Command.Done。
-	/// 等待该对象会启动命令，但不会自动转送 Result 中的输出；需要显示输出时应显式调用 Write。
+	/// 等待该对象会启动命令，但不会自动转送 Result 中的输出；要转送时使用 Out。
 	public partial System.Runtime.CompilerServices.TaskAwaiter<CommandExit> GetAwaiter();
+
+	/// 非同步消費命令結果：stdout 寫入 Sh.Stdout，stderr 寫入 Sh.Stderr，並等待命令退出。
+	public partial Task<CommandExit> Out(CT Ct);
+
+	/// 非同步消費命令結果：stdout 與 stderr 都寫入 Target，並等待命令退出。
+	public partial Task<CommandExit> Out(Content Target, CT Ct);
+
+	/// 非同步消費命令結果：stdout 與 stderr 都覆寫寫入 TargetPath，並等待命令退出。
+	/// 這是腳本將整條命令輸出寫入檔案的簡寫；TargetPath 的父目錄會自動建立。
+	public partial Task<CommandExit> Out(str TargetPath, CT Ct);
+
+	/// 非同步消費命令結果：分別指定 stdout 與 stderr 的輸出目標，並等待命令退出。
+	public partial Task<CommandExit> Out(Content Stdout, Content Stderr, CT Ct);
 
 	/// 释放结果流的临时资源；进程尚未结束时同时终止该进程。
 	public partial void Dispose();

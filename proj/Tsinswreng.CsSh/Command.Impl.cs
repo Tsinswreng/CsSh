@@ -27,6 +27,41 @@ public sealed partial class Command{
 		return Done.GetAwaiter();
 	}
 
+	public partial Task<CommandExit> Out(CT Ct) {
+		return Out(Sh.Stdout, Sh.Stderr, Ct);
+	}
+
+	public partial Task<CommandExit> Out(Content Target, CT Ct) {
+		return Out([Target, Target], Ct);
+	}
+
+	public async partial Task<CommandExit> Out(str TargetPath, CT Ct) {
+		var FileSystemPath = Sh.NormalizeFileSystemPath(TargetPath);
+		var Parent = Path.GetDirectoryName(FileSystemPath);
+		if (!string.IsNullOrEmpty(Parent))
+			Directory.CreateDirectory(Parent);
+		await using var Target = new Content(
+			new FileStream(FileSystemPath, FileMode.Create, FileAccess.Write, FileShare.None, 81920, useAsync: true),
+			new(LeaveOpen: false));
+		return await Out(Target, Ct).ConfigureAwait(false);
+	}
+
+	public async partial Task<CommandExit> Out(Content Stdout, Content Stderr, CT Ct) {
+		await Task.WhenAll(
+			Sh.Write(Stdout, Result.Stdout, Ct),
+			Sh.Write(Stderr, Result.Stderr, Ct),
+			Done).ConfigureAwait(false);
+		return await Done.ConfigureAwait(false);
+	}
+
+	/// Keeps a single output target safe from concurrent stdout/stderr writes.
+	private async Task<CommandExit> Out(IReadOnlyList<Content> Targets, CT Ct) {
+		await Task.WhenAll(
+			Sh.Write(Targets[0], [Result.Stdout, Result.Stderr], Ct),
+			Done).ConfigureAwait(false);
+		return await Done.ConfigureAwait(false);
+	}
+
 	public partial void Dispose() {
 		DisposeAsync().AsTask().GetAwaiter().GetResult();
 	}

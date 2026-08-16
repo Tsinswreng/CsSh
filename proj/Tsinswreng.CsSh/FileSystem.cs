@@ -36,9 +36,10 @@ public static partial class Sh{
 	public static partial Task<nil> Rm(str Path, CT Ct);
 
 	/// 复制文件，或递归复制整个目录树。
+	/// Source 也可为 glob；例如 Cp("ExternalRsrc/*", "output") 等价于 Bash 的 cp -r ExternalRsrc/* output。
 	public static partial void Cp(str Source, str Destination, CpOptions? Options = null);
 
-	/// 异步复制文件或目录；Ct 必须作为最后一个位置参数传入。
+	/// 异步复制文件、目录或 glob 匹配项；Ct 必须作为最后一个位置参数传入。
 	public static partial Task<nil> Cp(str Source, str Destination, CT Ct);
 
 	/// 异步复制文件或目录；需要覆写既有目标时传入 Options；Ct 必须作为最后一个位置参数传入。

@@ -12,5 +12,11 @@ public partial class TestCssh{
 
 	/// Verifies Content input is supplied through CommandOptions.
 	public partial Task<object?> XPassesContentAsStdin(object? O);
+
+	/// Verifies Out routes a lazy command result to an explicitly supplied Content target.
+	public partial Task<object?> OutWritesCommandOutput(object? O);
+
+	/// Verifies Out can concisely direct both output streams to a file path.
+	public partial Task<object?> OutWritesCommandOutputToPath(object? O);
 }
 

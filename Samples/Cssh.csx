@@ -11,16 +11,6 @@ var StartDir = Pwd();
 var Root = ScriptDir();
 var SampleDir = Root / "artifacts" / "cssh-sample";
 
-// 統一將命令的兩條結果流接回目前終端，並等待該命令的非同步退出結果。
-async Task<CommandExit> XTerm(Command Command){
-	await using var OwnedCommand = Command;
-	await Task.WhenAll(
-		Write(Stdout, Command.Result.Stdout, Ct),
-		Write(Stderr, Command.Result.Stderr, Ct),
-		Command.Done);
-	return await Command.Done;
-}
-
 // 每個範例均在樣本目錄內操作，避免修改腳本以外的檔案。
 await Rm(SampleDir, Ct);
 await Mkdir(SampleDir, Ct);
@@ -54,11 +44,13 @@ await foreach (var Item in Ls("input", Ct))
 await foreach (var Item in Find("input/**/*.txt", Ct))
 	await Echo("find: " + Item.FullName.Replace('\\', '/'), Ct);
 
-// X 只建立惰性 Command DTO；XTerm 開始消費 Result 的兩條 Stream 後才啟動命令。
-await XTerm(X("dotnet --version", Ct));
+// X 只建立惰性 Command DTO；Out 開始消費 Result 的兩條 Stream 後才啟動命令。
+await using (var Version = X("dotnet --version", Ct))
+	await Version.Out(Ct);
 
 // TryX 對非零退出碼不丟例外，仍透過 Done 非同步取得結構化退出結果。
-var GitProbe = await XTerm(TryX("git rev-parse --is-inside-work-tree", Ct));
+await using var GitProbeCommand = TryX("git rev-parse --is-inside-work-tree", Ct);
+var GitProbe = await GitProbeCommand.Out(Ct);
 await Echo("git probe success: " + GitProbe.IsSuccess, Ct);
 
 // Write 對應 >、Append 對應 >>；命令結果本身就是 Content，可直接成為來源。
@@ -77,10 +69,7 @@ await using (var History = TryX("git log -1 --oneline", Ct)) {
 // Read 回傳 Content，既可直接作 CommandOptions.Input，也可隱式取出普通 Stream。
 await using (Content Input = await Read("input/message.txt", Ct)) {
 	await using var Hash = X("git hash-object --stdin", new(Input), Ct);
-	await Task.WhenAll(
-		Write(Stdout, Hash.Result.Stdout, Ct),
-		Write(Stderr, Hash.Result.Stderr, Ct),
-		Hash.Done);
+	await Hash.Out(Ct);
 }
 
 // 命令管道不解析 |：下游命令的 Input 直接指向上游 Command 的 stdout Content。
@@ -95,10 +84,7 @@ await Task.WhenAll(
 
 // Null 是跨平台 /dev/null / NUL；此處只丟棄 stderr，stdout 仍顯示在終端。
 await using (var Version = X("dotnet --info", Ct)) {
-	await Task.WhenAll(
-		Write(Stdout, Version.Result.Stdout, Ct),
-		Write(Null, Version.Result.Stderr, Ct),
-		Version.Done);
+	await Version.Out(Stdout, Null, Ct);
 }
 
 Cd(StartDir);

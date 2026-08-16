@@ -67,6 +67,10 @@ public static partial class Sh{
 
 	public static partial async Task<nil> Cp(str Source, str Destination, CpOptions? Options, CT Ct) {
 		var Overwrite = Options?.Overwrite ?? false;
+		if (HasGlob(Source)) {
+			await CopyMatches(Source, Destination, Overwrite, Ct).ConfigureAwait(false);
+			return NIL;
+		}
 		var SourcePath = NormalizeFileSystemPath(Source);
 		var DestinationPath = NormalizeFileSystemPath(Destination);
 		if (File.Exists(SourcePath)) {
@@ -216,6 +220,47 @@ public static partial class Sh{
 			var Relative = Path.GetRelativePath(Source, SourceFile);
 			await CopyFile(SourceFile, Path.Combine(Destination, Relative), false, Ct).ConfigureAwait(false);
 		}
+	}
+
+	/// Copies every glob match as a direct child of Destination, preserving Bash's source/* shape.
+	private static async Task CopyMatches(str Source, str Destination, bool Overwrite, CT Ct) {
+		var DestinationPath = NormalizeFileSystemPath(Destination);
+		Directory.CreateDirectory(DestinationPath);
+		var FoundAny = false;
+		await foreach (var Entry in Find(Source, Ct)) {
+			FoundAny = true;
+			var Target = Destination / Entry.Name;
+			if (Entry is DirectoryInfo) {
+				// Bash's cp -r source/* destination merges a matching directory in destination.
+				// It must not reject a second resource tree that extends the same folder.
+				await CopyDirectoryMerge(Entry.FullName, Target, Ct).ConfigureAwait(false);
+			}
+			else {
+				// A matched file is the direct source child: Bash replaces an existing counterpart.
+				await CopyFile(Entry.FullName, NormalizeFileSystemPath(Target), true, Ct).ConfigureAwait(false);
+			}
+		}
+		if (!FoundAny)
+			throw new FileNotFoundException("Source glob did not match any file-system entries.", Source);
+	}
+
+	/// Recursively merges Source into Destination for glob-copy semantics.
+	private static async Task CopyDirectoryMerge(str Source, str Destination, CT Ct) {
+		Directory.CreateDirectory(Destination);
+		foreach (var SourceDirectory in Directory.EnumerateDirectories(Source, "*", SearchOption.AllDirectories)) {
+			Ct.ThrowIfCancellationRequested();
+			var Relative = Path.GetRelativePath(Source, SourceDirectory);
+			Directory.CreateDirectory(Path.Combine(Destination, Relative));
+		}
+		foreach (var SourceFile in Directory.EnumerateFiles(Source, "*", SearchOption.AllDirectories)) {
+			var Relative = Path.GetRelativePath(Source, SourceFile);
+			await CopyFile(SourceFile, Path.Combine(Destination, Relative), true, Ct).ConfigureAwait(false);
+		}
+	}
+
+	/// Glob detection is deliberately limited to the same wildcard characters supported by Find.
+	private static bool HasGlob(str Path) {
+		return Path.IndexOfAny(['*', '?']) >= 0;
 	}
 
 	private static str GlobRoot(str Pattern) {

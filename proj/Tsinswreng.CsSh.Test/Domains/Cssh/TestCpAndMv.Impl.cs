@@ -10,6 +10,7 @@ public partial class TestCssh{
 		Register(nameof(CpPreservesFilesAndEmptyDirectories), CpPreservesFilesAndEmptyDirectories!);
 		Register(nameof(MvCreatesDestinationParent), MvCreatesDestinationParent!);
 		Register(nameof(AsyncCpAndMvNeedNoNullOptions), AsyncCpAndMvNeedNoNullOptions!);
+		Register(nameof(CpGlobCopiesSourceContents), CpGlobCopiesSourceContents!);
 	}
 
 	/// Recursive copy retains an empty directory as well as ordinary file content.
@@ -58,6 +59,28 @@ public partial class TestCssh{
 			await using (Content Moved = await Sh.Read(Root + "/moved.txt", Source.Token)) {
 				Assert.IsTrue(await Moved.Text(Source.Token) == "async");
 			}
+		}
+		finally {
+			TestSupport.Clean(Root);
+		}
+		return null;
+	}
+
+	/// A trailing star has Bash's source-contents shape and preserves nested empty directories.
+	public async partial Task<object?> CpGlobCopiesSourceContents(object? O) {
+		var Root = TestSupport.NewRoot();
+		using var CtSource = new CancellationTokenSource();
+		var Ct = CtSource.Token;
+		try {
+			await Sh.Mkdir(Root + "/source/folder/empty", Ct);
+			await Sh.Write(Root + "/source/file.txt", "glob", Ct);
+			await Sh.Write(Root + "/destination/folder/kept.txt", "kept", Ct);
+			await Sh.Cp(Root + "/source/*", Root + "/destination", Ct);
+
+			Assert.IsTrue(await Sh.Exists(Root + "/destination/file.txt", Ct));
+			Assert.IsTrue(await Sh.Exists(Root + "/destination/folder/empty", Ct));
+			Assert.IsTrue(await Sh.Exists(Root + "/destination/folder/kept.txt", Ct));
+			Assert.IsTrue(!await Sh.Exists(Root + "/destination/source", Ct));
 		}
 		finally {
 			TestSupport.Clean(Root);
