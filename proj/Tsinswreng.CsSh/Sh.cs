@@ -25,7 +25,7 @@ public partial class Sh{
 	/// 取得当前 csx 脚本所在的目录。
 	/// 与 Pwd 不同：无论调用者从哪个工作目录启动 dotnet script，此值均指向脚本文件的父目录。
 	/// 返回路径统一使用正斜杠。
-	public partial str ScriptDir();
+	public partial str CsxDir();
 
 	/// 取得传给当前 csx 脚本的命令行参数，不包含 dotnet-script 自身参数和脚本路径。
 	public partial IReadOnlyList<str> Args();

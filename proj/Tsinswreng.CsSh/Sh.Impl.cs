@@ -15,7 +15,7 @@ public partial class Sh{
 		return NormalizePath(CurrentDirectory);
 	}
 
-	public partial str ScriptDir() {
+	public partial str CsxDir() {
 		var ScriptPath = Environment.GetCommandLineArgs()
 			.FirstOrDefault(Argument => Argument.EndsWith(".csx", StringComparison.OrdinalIgnoreCase));
 		if (ScriptPath is null)

@@ -7,7 +7,7 @@ public static partial class ShGlobal{
 	public static Content Stderr => Sh.Stderr;
 	public static Content Null => Sh.Null;
 	public static partial str Pwd(){ return Sh.Pwd(); }
-	public static partial str ScriptDir(){ return Sh.ScriptDir(); }
+	public static partial str CsxDir(){ return Sh.CsxDir(); }
 	public static partial IReadOnlyList<str> Args(){ return Sh.Args(); }
 	public static partial void Echo(str Text){ Sh.Echo(Text); }
 	public static partial Task<nil> Echo(str Text, CT Ct){ return Sh.Echo(Text, Ct); }
