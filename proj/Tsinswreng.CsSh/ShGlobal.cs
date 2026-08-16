@@ -1,0 +1,50 @@
+namespace Tsinswreng.CsSh;
+
+/// 全局默认 Shell 实例的静态 facade，供 csx 使用 using static 简化调用。
+public static partial class ShGlobal{
+	public static Sh Sh{get;set;} = new();
+	public static partial str Pwd();
+	public static partial str ScriptDir();
+	public static partial IReadOnlyList<str> Args();
+	public static partial void Echo(str Text);
+	public static partial Task<nil> Echo(str Text, CT Ct);
+	public static partial void Cd(str Path);
+	public static partial Command X(str Command);
+	public static partial Command X(str Command, CommandOptions Options);
+	public static partial Command X(str Command, in CT Ct);
+	public static partial Command X(str Command, CommandOptions Options, CT Ct);
+	public static partial Command TryX(str Command);
+	public static partial Command TryX(str Command, CommandOptions Options);
+	public static partial Command TryX(str Command, in CT Ct);
+	public static partial Command TryX(str Command, CommandOptions Options, CT Ct);
+	public static partial void Write(Content Target, Content Source);
+	public static partial Task<nil> Write(Content Target, Content Source, CT Ct);
+	public static partial void Write(Content Target, IReadOnlyList<Content> Sources);
+	public static partial Task<nil> Write(Content Target, IReadOnlyList<Content> Sources, CT Ct);
+	public static partial str? GetEnv(str Name);
+	public static partial void SetEnv(str Name, str Value);
+	public static partial void UnsetEnv(str Name);
+	public static partial bool Exists(str Path);
+	public static partial Task<bool> Exists(str Path, CT Ct);
+	public static partial void Mkdir(str Path);
+	public static partial Task<nil> Mkdir(str Path, CT Ct);
+	public static partial void Rm(str Path);
+	public static partial Task<nil> Rm(str Path, CT Ct);
+	public static partial void Cp(str Source, str Destination, CpOptions? Options = null);
+	public static partial Task<nil> Cp(str Source, str Destination, CT Ct);
+	public static partial Task<nil> Cp(str Source, str Destination, CpOptions? Options, CT Ct);
+	public static partial void Mv(str Source, str Destination, MvOptions? Options = null);
+	public static partial Task<nil> Mv(str Source, str Destination, CT Ct);
+	public static partial Task<nil> Mv(str Source, str Destination, MvOptions? Options, CT Ct);
+	public static partial IEnumerable<FileSystemInfo> Find(str Pattern);
+	public static partial IAsyncEnumerable<FileSystemInfo> Find(str Pattern, CT Ct);
+	public static partial IEnumerable<FileSystemInfo> Ls(str? Path = null, LsOptions? Options = null);
+	public static partial IAsyncEnumerable<FileSystemInfo> Ls(str? Path, CT Ct);
+	public static partial IAsyncEnumerable<FileSystemInfo> Ls(str? Path, LsOptions? Options, CT Ct);
+	public static partial Content Read(str Path);
+	public static partial Task<Content> Read(str Path, CT Ct);
+	public static partial void Write(str Path, Content Source);
+	public static partial Task<nil> Write(str Path, Content Source, CT Ct);
+	public static partial void Append(str Path, Content Source);
+	public static partial Task<nil> Append(str Path, Content Source, CT Ct);
+}

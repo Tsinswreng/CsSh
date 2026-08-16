@@ -4,32 +4,32 @@ using System.Text.RegularExpressions;
 
 namespace Tsinswreng.CsSh;
 
-public static partial class Sh{
-	public static partial bool Exists(str Path) {
+public partial class Sh{
+	public partial bool Exists(str Path) {
 		return Exists(Path, CancellationToken.None).GetAwaiter().GetResult();
 	}
 
-	public static partial Task<bool> Exists(str Path, CT Ct) {
+	public partial Task<bool> Exists(str Path, CT Ct) {
 		Ct.ThrowIfCancellationRequested();
 		var FileSystemPath = NormalizeFileSystemPath(Path);
 		return Task.FromResult(File.Exists(FileSystemPath) || Directory.Exists(FileSystemPath));
 	}
 
-	public static partial void Mkdir(str Path) {
+	public partial void Mkdir(str Path) {
 		Mkdir(Path, CancellationToken.None).GetAwaiter().GetResult();
 	}
 
-	public static partial Task<nil> Mkdir(str Path, CT Ct) {
+	public partial Task<nil> Mkdir(str Path, CT Ct) {
 		Ct.ThrowIfCancellationRequested();
 		Directory.CreateDirectory(NormalizeFileSystemPath(Path));
 		return Task.FromResult(NIL);
 	}
 
-	public static partial void Rm(str Path) {
+	public partial void Rm(str Path) {
 		Rm(Path, CancellationToken.None).GetAwaiter().GetResult();
 	}
 
-	public static partial Task<nil> Rm(str Path, CT Ct) {
+	public partial Task<nil> Rm(str Path, CT Ct) {
 		Ct.ThrowIfCancellationRequested();
 		var FileSystemPath = NormalizeFileSystemPath(Path);
 		FileAttributes Attributes;
@@ -57,15 +57,15 @@ public static partial class Sh{
 		return Task.FromResult(NIL);
 	}
 
-	public static partial void Cp(str Source, str Destination, CpOptions? Options) {
+	public partial void Cp(str Source, str Destination, CpOptions? Options) {
 		Cp(Source, Destination, Options, CancellationToken.None).GetAwaiter().GetResult();
 	}
 
-	public static partial Task<nil> Cp(str Source, str Destination, CT Ct) {
+	public partial Task<nil> Cp(str Source, str Destination, CT Ct) {
 		return Cp(Source, Destination, null, Ct);
 	}
 
-	public static partial async Task<nil> Cp(str Source, str Destination, CpOptions? Options, CT Ct) {
+	public partial async Task<nil> Cp(str Source, str Destination, CpOptions? Options, CT Ct) {
 		var Overwrite = Options?.Overwrite ?? false;
 		if (HasGlob(Source)) {
 			await CopyMatches(Source, Destination, Overwrite, Ct).ConfigureAwait(false);
@@ -85,15 +85,15 @@ public static partial class Sh{
 		return NIL;
 	}
 
-	public static partial void Mv(str Source, str Destination, MvOptions? Options) {
+	public partial void Mv(str Source, str Destination, MvOptions? Options) {
 		Mv(Source, Destination, Options, CancellationToken.None).GetAwaiter().GetResult();
 	}
 
-	public static partial Task<nil> Mv(str Source, str Destination, CT Ct) {
+	public partial Task<nil> Mv(str Source, str Destination, CT Ct) {
 		return Mv(Source, Destination, null, Ct);
 	}
 
-	public static partial async Task<nil> Mv(str Source, str Destination, MvOptions? Options, CT Ct) {
+	public partial async Task<nil> Mv(str Source, str Destination, MvOptions? Options, CT Ct) {
 		var Overwrite = Options?.Overwrite ?? false;
 		var SourcePath = NormalizeFileSystemPath(Source);
 		var DestinationPath = NormalizeFileSystemPath(Destination);
@@ -117,7 +117,7 @@ public static partial class Sh{
 		return NIL;
 	}
 
-	public static partial IEnumerable<FileSystemInfo> Find(str Pattern) {
+	public partial IEnumerable<FileSystemInfo> Find(str Pattern) {
 		var Regex = GlobToRegex(NormalizePath(Pattern));
 		var Root = GlobRoot(Pattern);
 		if (!Directory.Exists(Root))
@@ -126,7 +126,7 @@ public static partial class Sh{
 			.Where(Entry => Regex.IsMatch(NormalizePath(Entry.FullName)));
 	}
 
-	public static async partial IAsyncEnumerable<FileSystemInfo> Find(str Pattern, [EnumeratorCancellation] CT Ct) {
+	public async partial IAsyncEnumerable<FileSystemInfo> Find(str Pattern, [EnumeratorCancellation] CT Ct) {
 		var Regex = GlobToRegex(NormalizePath(Pattern));
 		var Root = GlobRoot(Pattern);
 		if (!Directory.Exists(Root))
@@ -139,17 +139,17 @@ public static partial class Sh{
 		}
 	}
 
-	public static partial IEnumerable<FileSystemInfo> Ls(str? Path, LsOptions? Options) {
+	public partial IEnumerable<FileSystemInfo> Ls(str? Path, LsOptions? Options) {
 		var Root = NormalizeFileSystemPath(Path ?? ".");
 		var Option = Options?.Recursive == true ? SearchOption.AllDirectories : SearchOption.TopDirectoryOnly;
 		return new DirectoryInfo(Root).EnumerateFileSystemInfos("*", Option);
 	}
 
-	public static partial IAsyncEnumerable<FileSystemInfo> Ls(str? Path, CT Ct) {
+	public partial IAsyncEnumerable<FileSystemInfo> Ls(str? Path, CT Ct) {
 		return Ls(Path, null, Ct);
 	}
 
-	public static async partial IAsyncEnumerable<FileSystemInfo> Ls(str? Path, LsOptions? Options, [EnumeratorCancellation] CT Ct) {
+	public async partial IAsyncEnumerable<FileSystemInfo> Ls(str? Path, LsOptions? Options, [EnumeratorCancellation] CT Ct) {
 		var Root = NormalizeFileSystemPath(Path ?? ".");
 		var Option = Options?.Recursive == true ? SearchOption.AllDirectories : SearchOption.TopDirectoryOnly;
 		foreach (var Entry in new DirectoryInfo(Root).EnumerateFileSystemInfos("*", Option)) {
@@ -159,21 +159,21 @@ public static partial class Sh{
 		}
 	}
 
-	public static partial Content Read(str Path) {
+	public partial Content Read(str Path) {
 		return Read(Path, CancellationToken.None).GetAwaiter().GetResult();
 	}
 
-	public static partial Task<Content> Read(str Path, CT Ct) {
+	public partial Task<Content> Read(str Path, CT Ct) {
 		Ct.ThrowIfCancellationRequested();
 		Stream Result = new FileStream(NormalizeFileSystemPath(Path), FileMode.Open, FileAccess.Read, FileShare.Read, 81920, useAsync: true);
 		return Task.FromResult<Content>(new(Result, new(LeaveOpen: false)));
 	}
 
-	public static partial void Write(str Path, Content Source) {
+	public partial void Write(str Path, Content Source) {
 		Write(Path, Source, CancellationToken.None).GetAwaiter().GetResult();
 	}
 
-	public static partial async Task<nil> Write(str Path, Content Source, CT Ct) {
+	public partial async Task<nil> Write(str Path, Content Source, CT Ct) {
 		ArgumentNullException.ThrowIfNull(Source);
 		var FileSystemPath = NormalizeFileSystemPath(Path);
 		EnsureParentDirectory(FileSystemPath);
@@ -182,11 +182,11 @@ public static partial class Sh{
 		return NIL;
 	}
 
-	public static partial void Append(str Path, Content Source) {
+	public partial void Append(str Path, Content Source) {
 		Append(Path, Source, CancellationToken.None).GetAwaiter().GetResult();
 	}
 
-	public static partial async Task<nil> Append(str Path, Content Source, CT Ct) {
+	public partial async Task<nil> Append(str Path, Content Source, CT Ct) {
 		ArgumentNullException.ThrowIfNull(Source);
 		var FileSystemPath = NormalizeFileSystemPath(Path);
 		EnsureParentDirectory(FileSystemPath);
@@ -195,7 +195,7 @@ public static partial class Sh{
 		return NIL;
 	}
 
-	private static async Task CopyFile(str Source, str Destination, bool Overwrite, CT Ct) {
+	private async Task CopyFile(str Source, str Destination, bool Overwrite, CT Ct) {
 		EnsureParentDirectory(Destination);
 		if (File.Exists(Destination) && !Overwrite)
 			throw new IOException("Destination file already exists.");
@@ -204,7 +204,7 @@ public static partial class Sh{
 		await Input.CopyToAsync(Output, Ct).ConfigureAwait(false);
 	}
 
-	private static async Task CopyDirectory(str Source, str Destination, bool Overwrite, CT Ct) {
+	private async Task CopyDirectory(str Source, str Destination, bool Overwrite, CT Ct) {
 		if (Directory.Exists(Destination)) {
 			if (!Overwrite)
 				throw new IOException("Destination directory already exists.");
@@ -223,7 +223,7 @@ public static partial class Sh{
 	}
 
 	/// Copies every glob match as a direct child of Destination, preserving Bash's source/* shape.
-	private static async Task CopyMatches(str Source, str Destination, bool Overwrite, CT Ct) {
+	private async Task CopyMatches(str Source, str Destination, bool Overwrite, CT Ct) {
 		var DestinationPath = NormalizeFileSystemPath(Destination);
 		Directory.CreateDirectory(DestinationPath);
 		var FoundAny = false;
@@ -245,7 +245,7 @@ public static partial class Sh{
 	}
 
 	/// Recursively merges Source into Destination for glob-copy semantics.
-	private static async Task CopyDirectoryMerge(str Source, str Destination, CT Ct) {
+	private async Task CopyDirectoryMerge(str Source, str Destination, CT Ct) {
 		Directory.CreateDirectory(Destination);
 		foreach (var SourceDirectory in Directory.EnumerateDirectories(Source, "*", SearchOption.AllDirectories)) {
 			Ct.ThrowIfCancellationRequested();
@@ -259,11 +259,11 @@ public static partial class Sh{
 	}
 
 	/// Glob detection is deliberately limited to the same wildcard characters supported by Find.
-	private static bool HasGlob(str Path) {
+	private bool HasGlob(str Path) {
 		return Path.IndexOfAny(['*', '?']) >= 0;
 	}
 
-	private static str GlobRoot(str Pattern) {
+	private str GlobRoot(str Pattern) {
 		var NormalizedPattern = NormalizePath(Pattern);
 		var MagicIndex = NormalizedPattern.IndexOfAny(['*', '?']);
 		if (MagicIndex < 0) {
@@ -276,7 +276,7 @@ public static partial class Sh{
 		return NormalizeFileSystemPath(string.IsNullOrEmpty(Root) ? "." : Root);
 	}
 
-	private static Regex GlobToRegex(str Pattern) {
+	private Regex GlobToRegex(str Pattern) {
 		var Builder = new StringBuilder("^");
 		for (var Index = 0; Index < Pattern.Length; Index++) {
 			var Character = Pattern[Index];
@@ -304,7 +304,7 @@ public static partial class Sh{
 		return new(Builder.ToString(), OperatingSystem.IsWindows() ? RegexOptions.IgnoreCase : RegexOptions.None);
 	}
 
-	private static void EnsureParentDirectory(str FileSystemPath) {
+	private void EnsureParentDirectory(str FileSystemPath) {
 		var Parent = System.IO.Path.GetDirectoryName(FileSystemPath);
 		if (!string.IsNullOrEmpty(Parent))
 			Directory.CreateDirectory(Parent);

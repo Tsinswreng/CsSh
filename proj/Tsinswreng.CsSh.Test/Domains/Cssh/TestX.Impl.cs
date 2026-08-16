@@ -7,7 +7,7 @@ namespace Tsinswreng.CsSh.Test.Domains.CsSh;
 /// Implements tests for successful lazy command execution.
 public partial class TestCssh{
 	public partial void RegisterX(ITestNode Node) {
-		var Register = Node.MkTestFnRegister(typeof(TestCssh), [typeof(Sh)], [nameof(Sh.X)], "Command").Register;
+		var Register = Node.MkTestFnRegister(typeof(TestCssh), [typeof(ShGlobal)], [nameof(ShGlobal.X)], "Command").Register;
 		Register(nameof(XStartsWhenDoneIsObservedAndReturnsStdout), XStartsWhenDoneIsObservedAndReturnsStdout!);
 		Register(nameof(XPassesContentAsStdin), XPassesContentAsStdin!);
 		Register(nameof(OutWritesCommandOutput), OutWritesCommandOutput!);
@@ -16,7 +16,7 @@ public partial class TestCssh{
 
 	/// Observing Done starts the lazy process; stdout remains consumable after it exits.
 	public async partial Task<object?> XStartsWhenDoneIsObservedAndReturnsStdout(object? O) {
-		await using var Command = Sh.X("dotnet --version");
+		await using var Command = ShGlobal.X("dotnet --version");
 		var Exit = await Command.Done;
 		using var Reader = new StreamReader(Command.Result.Stdout, Encoding.UTF8, leaveOpen: true);
 		var Text = await Reader.ReadToEndAsync();
@@ -30,7 +30,7 @@ public partial class TestCssh{
 		using var CtSource = new CancellationTokenSource();
 		var Ct = CtSource.Token;
 		Content Input = "stream-input";
-		await using var Command = Sh.X("dotnet --version", new(Input), Ct);
+		await using var Command = ShGlobal.X("dotnet --version", new(Input), Ct);
 		var Exit = await Command.Done;
 		Assert.IsTrue(Exit.IsSuccess);
 		return null;
@@ -42,7 +42,7 @@ public partial class TestCssh{
 		var Ct = CtSource.Token;
 		await using var Buffer = new MemoryStream();
 		await using var Output = new Content(Buffer, new(LeaveOpen: true));
-		await using var Command = Sh.X("dotnet --version", Ct);
+		await using var Command = ShGlobal.X("dotnet --version", Ct);
 
 		var Exit = await Command.Out(Output, Ct);
 		Buffer.Position = 0;
@@ -59,9 +59,9 @@ public partial class TestCssh{
 		var Ct = CtSource.Token;
 		try {
 			var Path = Root / "logs/dotnet-version.txt";
-			await using var Command = Sh.X("dotnet --version", Ct);
+			await using var Command = ShGlobal.X("dotnet --version", Ct);
 			Assert.IsTrue((await Command.Out(Path, Ct)).IsSuccess);
-			await using var Output = await Sh.Read(Path, Ct);
+			await using var Output = await ShGlobal.Read(Path, Ct);
 			Assert.IsTrue(!string.IsNullOrWhiteSpace(await Output.Text(Ct)));
 		}
 		finally {

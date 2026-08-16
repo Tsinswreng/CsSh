@@ -1,6 +1,6 @@
 using Tsinswreng.CsTreeTest;
 using Tsinswreng.CsSh;
-using static Tsinswreng.CsSh.Sh;
+using static Tsinswreng.CsSh.ShGlobal;
 
 namespace Tsinswreng.CsSh.Test.Domains.CsSh;
 
@@ -9,7 +9,7 @@ public partial class TestCssh{
 	public partial void RegisterIntegratedWorkflow(ITestNode Node) {
 		var Register = Node.MkTestFnRegister(
 			typeof(TestCssh),
-			[typeof(Sh), typeof(ExtnString)],
+			[typeof(ShGlobal), typeof(ExtnString)],
 			[nameof(Mkdir), nameof(Write), nameof(Read), nameof(Append), nameof(Cp), nameof(Mv), nameof(Ls), nameof(Find), nameof(X), nameof(TryX), nameof(Rm)],
 			"Integrated").Register;
 		Register(nameof(IntegratedWorkflowCreatesUsesAndRemovesEntrySideData), IntegratedWorkflowCreatesUsesAndRemovesEntrySideData!);

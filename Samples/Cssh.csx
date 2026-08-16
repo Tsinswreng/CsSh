@@ -3,7 +3,7 @@
 // #r "path/to/Tsinswreng.CsSh.dll"
 
 using Tsinswreng.CsSh;
-using static Tsinswreng.CsSh.Sh;
+using static Tsinswreng.CsSh.ShGlobal;
 
 using var CtSource = new CancellationTokenSource();
 var Ct = CtSource.Token;

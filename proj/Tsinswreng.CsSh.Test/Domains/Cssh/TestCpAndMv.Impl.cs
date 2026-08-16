@@ -6,7 +6,7 @@ namespace Tsinswreng.CsSh.Test.Domains.CsSh;
 /// Implements tests for copy and move operations.
 public partial class TestCssh{
 	public partial void RegisterCpAndMv(ITestNode Node) {
-		var Register = Node.MkTestFnRegister(typeof(TestCssh), [typeof(Sh)], [nameof(Sh.Cp), nameof(Sh.Mv)], "FileSystem").Register;
+		var Register = Node.MkTestFnRegister(typeof(TestCssh), [typeof(ShGlobal)], [nameof(ShGlobal.Cp), nameof(ShGlobal.Mv)], "FileSystem").Register;
 		Register(nameof(CpPreservesFilesAndEmptyDirectories), CpPreservesFilesAndEmptyDirectories!);
 		Register(nameof(MvCreatesDestinationParent), MvCreatesDestinationParent!);
 		Register(nameof(AsyncCpAndMvNeedNoNullOptions), AsyncCpAndMvNeedNoNullOptions!);
@@ -17,13 +17,13 @@ public partial class TestCssh{
 	public partial Task<object?> CpPreservesFilesAndEmptyDirectories(object? O) {
 		var Root = TestSupport.NewRoot();
 		try {
-			Sh.Mkdir(Root + "/source/empty");
-			Sh.Write(Root + "/source/content/data.txt", "copied");
-			Sh.Cp(Root + "/source", Root + "/destination");
-			using (Content Copied = Sh.Read(Root + "/destination/content/data.txt")) {
+			ShGlobal.Mkdir(Root + "/source/empty");
+			ShGlobal.Write(Root + "/source/content/data.txt", "copied");
+			ShGlobal.Cp(Root + "/source", Root + "/destination");
+			using (Content Copied = ShGlobal.Read(Root + "/destination/content/data.txt")) {
 				Assert.IsTrue((string)Copied == "copied");
 			}
-			Assert.IsTrue(Sh.Exists(Root + "/destination/empty"));
+			Assert.IsTrue(ShGlobal.Exists(Root + "/destination/empty"));
 		}
 		finally {
 			TestSupport.Clean(Root);
@@ -35,10 +35,10 @@ public partial class TestCssh{
 	public partial Task<object?> MvCreatesDestinationParent(object? O) {
 		var Root = TestSupport.NewRoot();
 		try {
-			Sh.Write(Root + "/source.txt", "moved");
-			Sh.Mv(Root + "/source.txt", Root + "/deep/path/destination.txt");
-			Assert.IsTrue(!Sh.Exists(Root + "/source.txt"));
-			using (Content Moved = Sh.Read(Root + "/deep/path/destination.txt")) {
+			ShGlobal.Write(Root + "/source.txt", "moved");
+			ShGlobal.Mv(Root + "/source.txt", Root + "/deep/path/destination.txt");
+			Assert.IsTrue(!ShGlobal.Exists(Root + "/source.txt"));
+			using (Content Moved = ShGlobal.Read(Root + "/deep/path/destination.txt")) {
 				Assert.IsTrue((string)Moved == "moved");
 			}
 		}
@@ -53,10 +53,10 @@ public partial class TestCssh{
 		var Root = TestSupport.NewRoot();
 		try {
 			using var Source = new CancellationTokenSource();
-			await Sh.Write(Root + "/source.txt", "async", Source.Token);
-			await Sh.Cp(Root + "/source.txt", Root + "/copy.txt", Source.Token);
-			await Sh.Mv(Root + "/copy.txt", Root + "/moved.txt", Source.Token);
-			await using (Content Moved = await Sh.Read(Root + "/moved.txt", Source.Token)) {
+			await ShGlobal.Write(Root + "/source.txt", "async", Source.Token);
+			await ShGlobal.Cp(Root + "/source.txt", Root + "/copy.txt", Source.Token);
+			await ShGlobal.Mv(Root + "/copy.txt", Root + "/moved.txt", Source.Token);
+			await using (Content Moved = await ShGlobal.Read(Root + "/moved.txt", Source.Token)) {
 				Assert.IsTrue(await Moved.Text(Source.Token) == "async");
 			}
 		}
@@ -72,15 +72,15 @@ public partial class TestCssh{
 		using var CtSource = new CancellationTokenSource();
 		var Ct = CtSource.Token;
 		try {
-			await Sh.Mkdir(Root + "/source/folder/empty", Ct);
-			await Sh.Write(Root + "/source/file.txt", "glob", Ct);
-			await Sh.Write(Root + "/destination/folder/kept.txt", "kept", Ct);
-			await Sh.Cp(Root + "/source/*", Root + "/destination", Ct);
+			await ShGlobal.Mkdir(Root + "/source/folder/empty", Ct);
+			await ShGlobal.Write(Root + "/source/file.txt", "glob", Ct);
+			await ShGlobal.Write(Root + "/destination/folder/kept.txt", "kept", Ct);
+			await ShGlobal.Cp(Root + "/source/*", Root + "/destination", Ct);
 
-			Assert.IsTrue(await Sh.Exists(Root + "/destination/file.txt", Ct));
-			Assert.IsTrue(await Sh.Exists(Root + "/destination/folder/empty", Ct));
-			Assert.IsTrue(await Sh.Exists(Root + "/destination/folder/kept.txt", Ct));
-			Assert.IsTrue(!await Sh.Exists(Root + "/destination/source", Ct));
+			Assert.IsTrue(await ShGlobal.Exists(Root + "/destination/file.txt", Ct));
+			Assert.IsTrue(await ShGlobal.Exists(Root + "/destination/folder/empty", Ct));
+			Assert.IsTrue(await ShGlobal.Exists(Root + "/destination/folder/kept.txt", Ct));
+			Assert.IsTrue(!await ShGlobal.Exists(Root + "/destination/source", Ct));
 		}
 		finally {
 			TestSupport.Clean(Root);

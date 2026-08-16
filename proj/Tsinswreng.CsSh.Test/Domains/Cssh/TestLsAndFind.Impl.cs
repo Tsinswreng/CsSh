@@ -6,7 +6,7 @@ namespace Tsinswreng.CsSh.Test.Domains.CsSh;
 /// Implements tests for listing and recursive glob lookup.
 public partial class TestCssh{
 	public partial void RegisterLsAndFind(ITestNode Node) {
-		var Register = Node.MkTestFnRegister(typeof(TestCssh), [typeof(Sh)], [nameof(Sh.Ls), nameof(Sh.Find)], "FileSystem").Register;
+		var Register = Node.MkTestFnRegister(typeof(TestCssh), [typeof(ShGlobal)], [nameof(ShGlobal.Ls), nameof(ShGlobal.Find)], "FileSystem").Register;
 		Register(nameof(LsExposesFileAndDirectoryKinds), LsExposesFileAndDirectoryKinds!);
 		Register(nameof(LsExposesBclFileAttributes), LsExposesBclFileAttributes!);
 		Register(nameof(FindMatchesRecursiveRelativeGlob), FindMatchesRecursiveRelativeGlob!);
@@ -17,9 +17,9 @@ public partial class TestCssh{
 	public partial Task<object?> LsExposesFileAndDirectoryKinds(object? O) {
 		var Root = TestSupport.NewRoot();
 		try {
-			Sh.Mkdir(Root + "/folder");
-			Sh.Write(Root + "/file.txt", "entry");
-			var Entries = Sh.Ls(Root).ToDictionary(Entry => Entry.Name);
+			ShGlobal.Mkdir(Root + "/folder");
+			ShGlobal.Write(Root + "/file.txt", "entry");
+			var Entries = ShGlobal.Ls(Root).ToDictionary(Entry => Entry.Name);
 			Assert.IsTrue(Entries["folder"] is DirectoryInfo);
 			Assert.IsTrue(Entries["file.txt"] is FileInfo File && File.Length == 5);
 		}
@@ -33,8 +33,8 @@ public partial class TestCssh{
 	public partial Task<object?> LsExposesBclFileAttributes(object? O) {
 		var Root = TestSupport.NewRoot();
 		try {
-			Sh.Write(Root + "/data.bin", "metadata");
-			var File = Sh.Ls(Root).OfType<FileInfo>().Single(Entry => Entry.Name == "data.bin");
+			ShGlobal.Write(Root + "/data.bin", "metadata");
+			var File = ShGlobal.Ls(Root).OfType<FileInfo>().Single(Entry => Entry.Name == "data.bin");
 			Assert.IsTrue(File.Length == 8);
 			Assert.IsTrue(!File.Attributes.HasFlag(FileAttributes.Directory));
 			Assert.IsTrue(File.LastWriteTimeUtc <= DateTime.UtcNow);
@@ -49,10 +49,10 @@ public partial class TestCssh{
 	public partial Task<object?> FindMatchesRecursiveRelativeGlob(object? O) {
 		var Root = TestSupport.NewRoot();
 		try {
-			Sh.Write(Root + "/input/a.txt", "a");
-			Sh.Write(Root + "/input/nested/b.txt", "b");
-			Sh.Write(Root + "/input/nested/c.bin", "c");
-			var Found = Sh.Find(Root + "/input/**/*.txt").Select(Entry => Entry.Name).Order().ToArray();
+			ShGlobal.Write(Root + "/input/a.txt", "a");
+			ShGlobal.Write(Root + "/input/nested/b.txt", "b");
+			ShGlobal.Write(Root + "/input/nested/c.bin", "c");
+			var Found = ShGlobal.Find(Root + "/input/**/*.txt").Select(Entry => Entry.Name).Order().ToArray();
 			Assert.IsTrue(Found.SequenceEqual(["a.txt", "b.txt"]));
 		}
 		finally {
@@ -66,9 +66,9 @@ public partial class TestCssh{
 		var Root = TestSupport.NewRoot();
 		try {
 			using var Source = new CancellationTokenSource();
-			await Sh.Write(Root + "/entry.txt", "entry", Source.Token);
+			await ShGlobal.Write(Root + "/entry.txt", "entry", Source.Token);
 			var FoundFile = false;
-			await foreach (var Entry in Sh.Ls(Root, Source.Token)) {
+			await foreach (var Entry in ShGlobal.Ls(Root, Source.Token)) {
 				FoundFile |= Entry.Name == "entry.txt" && Entry is FileInfo;
 			}
 			Assert.IsTrue(FoundFile);

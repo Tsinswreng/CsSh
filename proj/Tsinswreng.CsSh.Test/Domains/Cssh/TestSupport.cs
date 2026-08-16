@@ -11,7 +11,7 @@ internal static class TestSupport{
 
 	/// Removes test data even after an assertion failure; Rm is intentionally idempotent.
 	internal static void Clean(string Root) {
-		Sh.Rm(Root);
+		ShGlobal.Rm(Root);
 	}
 }
 

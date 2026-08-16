@@ -28,7 +28,7 @@ public sealed partial class Command{
 	}
 
 	public partial Task<CommandExit> Out(CT Ct) {
-		return Out(Sh.Stdout, Sh.Stderr, Ct);
+		return Out(Options.Sh.Stdout, Options.Sh.Stderr, Ct);
 	}
 
 	public partial Task<CommandExit> Out(Content Target, CT Ct) {
@@ -36,7 +36,7 @@ public sealed partial class Command{
 	}
 
 	public async partial Task<CommandExit> Out(str TargetPath, CT Ct) {
-		var FileSystemPath = Sh.NormalizeFileSystemPath(TargetPath);
+		var FileSystemPath = Options.Sh.NormalizeFileSystemPath(TargetPath);
 		var Parent = Path.GetDirectoryName(FileSystemPath);
 		if (!string.IsNullOrEmpty(Parent))
 			Directory.CreateDirectory(Parent);
@@ -48,8 +48,8 @@ public sealed partial class Command{
 
 	public async partial Task<CommandExit> Out(Content Stdout, Content Stderr, CT Ct) {
 		await Task.WhenAll(
-			Sh.Write(Stdout, Result.Stdout, Ct),
-			Sh.Write(Stderr, Result.Stderr, Ct),
+			Options.Sh.Write(Stdout, Result.Stdout, Ct),
+			Options.Sh.Write(Stderr, Result.Stderr, Ct),
 			Done).ConfigureAwait(false);
 		return await Done.ConfigureAwait(false);
 	}
@@ -57,7 +57,7 @@ public sealed partial class Command{
 	/// Keeps a single output target safe from concurrent stdout/stderr writes.
 	private async Task<CommandExit> Out(IReadOnlyList<Content> Targets, CT Ct) {
 		await Task.WhenAll(
-			Sh.Write(Targets[0], [Result.Stdout, Result.Stderr], Ct),
+			Options.Sh.Write(Targets[0], [Result.Stdout, Result.Stderr], Ct),
 			Done).ConfigureAwait(false);
 		return await Done.ConfigureAwait(false);
 	}
@@ -137,7 +137,7 @@ public sealed partial class Command{
 		return new(){
 			FileName = Program,
 			Arguments = Arguments,
-			WorkingDirectory = Options.Options.Cwd is null ? Environment.CurrentDirectory : Sh.NormalizeFileSystemPath(Options.Options.Cwd),
+			WorkingDirectory = Options.Sh.NormalizeFileSystemPath(Options.Options.Cwd ?? Options.Sh.Pwd()),
 			UseShellExecute = false,
 			RedirectStandardInput = Options.Options.Input is not null,
 			RedirectStandardOutput = true,

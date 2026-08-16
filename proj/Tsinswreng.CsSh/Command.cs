@@ -53,7 +53,8 @@ public sealed record CommandOptions(
 	str? Cwd = null);
 
 /// Command 的內部執行配置。
-internal sealed record CommandRunOptions(
+public sealed record CommandRunOptions(
+	Sh Sh,
 	str Text,
 	CommandOptions Options,
 	CT Ct,

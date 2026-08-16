@@ -2,11 +2,12 @@
 // #r "path/to/Tsinswreng.CsSh.dll"
 
 using Tsinswreng.CsSh;
-using static Tsinswreng.CsSh.Sh;
+using static Tsinswreng.CsSh.ShGlobal;
 
 using var CtSource = new CancellationTokenSource();
 var Ct = CtSource.Token;
 var Root = Path.GetFullPath(ScriptDir() / "../..").Replace('\\', '/');
+Cd(Root);
 
 // 每個目錄都依原 Bash 腳本的順序掃描；Find 保持惰性，不會先將所有專案載入記憶體。
 var ProjectRoots = new[]{
@@ -65,7 +66,7 @@ var ProjectRoots = new[]{
 
 foreach (var ProjectRoot in ProjectRoots) {
 	await foreach (var Project in Find(Root / ProjectRoot / "**/*.csproj", Ct)) {
-		await using var Add = X($"dotnet sln add \"{Project.FullName}\"", new(Cwd: Root), Ct);
+		await using var Add = X($"dotnet sln add \"{Project.FullName}\"", Ct);
 		await Add.Out(Ct);
 	}
 }
