@@ -18,5 +18,11 @@ public partial class TestCssh{
 
 	/// Verifies a source glob copies its matches as destination children rather than nesting the source directory.
 	public partial Task<object?> CpGlobCopiesSourceContents(object? O);
+
+	/// Verifies an existing directory destination receives the source file name.
+	public partial Task<object?> CpFileIntoExistingDirectory(object? O);
+
+	/// Verifies an existing directory destination receives the source directory name.
+	public partial Task<object?> MvDirectoryIntoExistingDirectory(object? O);
 }
 

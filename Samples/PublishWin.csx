@@ -19,25 +19,25 @@ await Rm(OldPublishDir, Ct);
 if (await Exists(PublishDir, Ct))
 	await Mv(PublishDir, OldPublishDir, Ct);
 
-await Exe("dotnet publish -c Release -r win-x64 -p:AllowMissingPrunePackageData=true", Ct);
+await Exe("dotnet", ["publish", "-c", "Release", "-r", "win-x64", "-p:AllowMissingPrunePackageData=true"], Ct);
 await Rm(OldPublishDir, Ct);
 
 // 資源同步入口在 Ngan.Dict.Scripts 中；用 Cd 切到根目錄後直接呼叫，不建立 Cwd DTO。
 Cd(Root);
-await Exe($"dotnet run --project \"{Root / "Ngan.Dict/Ngan.Dict.Scripts/Ngan.Dict.Scripts.csproj"}\" -- CpAssets", Ct);
+await Exe("dotnet", ["run", "--project", Root / "Ngan.Dict/Ngan.Dict.Scripts/Ngan.Dict.Scripts.csproj", "--", "CpAssets"], Ct);
 Cd(ProjectDir);
 
 // 生成一份可分發副本，再刪除符號檔。
 await Rm(PublishNoPdbDir, Ct);
 await Cp(PublishDir / "*", PublishNoPdbDir, Ct);
-await foreach (var Pdb in Find(PublishNoPdbDir / "**/*.pdb", Ct))
+await foreach (var Pdb in Glob(PublishNoPdbDir / "**/*.pdb", Ct))
 	await Rm(Pdb.FullName, Ct);
 
 // 壓縮檔暫存在來源目錄外，以免 tar 在掃描來源時把自身打進去。
 var ArchivePath = ProjectDir / "bin/Release/net10.0/win-x64/Ngan.Dict.Windows.tar.gz";
 await Rm(ArchivePath, Ct);
 Cd(PublishNoPdbDir);
-await Exe($"tar -czf \"{ArchivePath}\" .", Ct);
+await Exe("tar", ["-czf", ArchivePath, "."], Ct);
 await Mv(ArchivePath, PublishNoPdbDir / "Ngan.Dict.Windows.tar.gz", Ct);
 
 await Echo("Windows publish completed.", Ct);

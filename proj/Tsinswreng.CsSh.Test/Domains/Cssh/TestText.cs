@@ -9,4 +9,7 @@ public partial class TestCssh{
 
 	/// Verifies Text drains standard error together with standard output and exposes the successful exit result.
 	public partial Task<object?> TextReadsBothOutputs(object? O);
+
+	/// Verifies CommandOptions.Env only changes the child process environment.
+	public partial Task<object?> CommandEnvironmentOverridesArePerCommand(object? O);
 }

@@ -19,7 +19,7 @@ public partial class TestCssh{
 
 	/// Observing Done starts the lazy process; stdout remains consumable after it exits.
 	public async partial Task<object?> XStartsWhenDoneIsObservedAndReturnsStdout(object? O) {
-		await using var Command = ShGlobal.Cmd("dotnet --version");
+		await using var Command = ShGlobal.Cmd("dotnet", ["--version"]);
 		var Exit = await Command.Done;
 		using var Reader = new StreamReader(Command.Result.Stdout, Encoding.UTF8, leaveOpen: true);
 		var Text = await Reader.ReadToEndAsync();
@@ -33,7 +33,7 @@ public partial class TestCssh{
 		using var CtSource = new CancellationTokenSource();
 		var Ct = CtSource.Token;
 		Content Input = "stream-input";
-		await using var Command = ShGlobal.Cmd("dotnet --version", new CommandOptions(Input), Ct);
+		await using var Command = ShGlobal.Cmd("dotnet", ["--version"], new CommandOptions(Input), Ct);
 		var Exit = await Command.Done;
 		Assert.IsTrue(Exit.IsSuccess);
 		return null;
@@ -45,7 +45,7 @@ public partial class TestCssh{
 		var Ct = CtSource.Token;
 		await using var Buffer = new MemoryStream();
 		await using var Output = new Content(Buffer, new(LeaveOpen: true));
-		await using var Command = ShGlobal.Cmd("dotnet --version", Ct);
+		await using var Command = ShGlobal.Cmd("dotnet", ["--version"], Ct);
 
 		var Exit = await Command.Out(Output, Ct);
 		Buffer.Position = 0;
@@ -62,7 +62,7 @@ public partial class TestCssh{
 		var Ct = CtSource.Token;
 		try {
 			var Path = Root / "logs/dotnet-version.txt";
-			await using var Command = ShGlobal.Cmd("dotnet --version", Ct);
+			await using var Command = ShGlobal.Cmd("dotnet", ["--version"], Ct);
 			Assert.IsTrue((await Command.Out(Path, Ct)).IsSuccess);
 			await using var Output = await ShGlobal.Read(Path, Ct);
 			Assert.IsTrue(!string.IsNullOrWhiteSpace(await Output.Text(Ct)));
@@ -76,7 +76,7 @@ public partial class TestCssh{
 	/// Exe consumes its Cmd internally so a normal script command cannot be forgotten unexecuted.
 	public async partial Task<object?> ExeWritesDefaultOutput(object? O) {
 		using var CtSource = new CancellationTokenSource();
-		var Exit = await ShGlobal.Exe("dotnet --version", CtSource.Token);
+		var Exit = await ShGlobal.Exe("dotnet", ["--version"], CtSource.Token);
 		Assert.IsTrue(Exit.IsSuccess);
 		return null;
 	}

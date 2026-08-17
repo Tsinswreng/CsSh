@@ -43,26 +43,6 @@ public partial class Sh{
 		CurrentDirectory = System.IO.Path.GetFullPath(Candidate).Replace('\\', '/');
 	}
 
-	public partial Command Cmd(str Command) {
-		return Cmd(Command, new CommandOptions(), CancellationToken.None);
-	}
-
-	public partial Command Cmd(str Command, CommandOptions Options) {
-		return Cmd(Command, Options, CancellationToken.None);
-	}
-
-	public partial Command Cmd(str Command, in CT Ct) {
-		return Cmd(Command, new CommandOptions(), Ct);
-	}
-
-	public partial Command Cmd(str Command, CommandOptions Options, CT Ct) {
-		var Cwd = NormalizeFileSystemPath(Options.Cwd ?? CurrentDirectory);
-		var FirstSpace = Command.IndexOfAny([' ', '\t']);
-		var Exe = FirstSpace < 0 ? Command : Command[..FirstSpace];
-		var RawArgs = FirstSpace < 0 ? "" : Command[(FirstSpace + 1)..].TrimStart();
-		return new(new(Exe, RawArgs, null, Options, Cwd, Stdout, Stderr, Ct, true));
-	}
-
 	public partial Command Cmd(str Exe, IList<str> Args) {
 		return Cmd(Exe, Args, new CommandOptions(), CancellationToken.None);
 	}
@@ -79,27 +59,7 @@ public partial class Sh{
 		ArgumentException.ThrowIfNullOrWhiteSpace(Exe);
 		ArgumentNullException.ThrowIfNull(Args);
 		var Cwd = NormalizeFileSystemPath(Options.Cwd ?? CurrentDirectory);
-		return new(new(Exe, null, Args.ToArray(), Options, Cwd, Stdout, Stderr, Ct, true));
-	}
-
-	public partial Command TryCmd(str Command) {
-		return TryCmd(Command, new CommandOptions(), CancellationToken.None);
-	}
-
-	public partial Command TryCmd(str Command, CommandOptions Options) {
-		return TryCmd(Command, Options, CancellationToken.None);
-	}
-
-	public partial Command TryCmd(str Command, in CT Ct) {
-		return TryCmd(Command, new CommandOptions(), Ct);
-	}
-
-	public partial Command TryCmd(str Command, CommandOptions Options, CT Ct) {
-		var Cwd = NormalizeFileSystemPath(Options.Cwd ?? CurrentDirectory);
-		var FirstSpace = Command.IndexOfAny([' ', '\t']);
-		var Exe = FirstSpace < 0 ? Command : Command[..FirstSpace];
-		var RawArgs = FirstSpace < 0 ? "" : Command[(FirstSpace + 1)..].TrimStart();
-		return new(new(Exe, RawArgs, null, Options, Cwd, Stdout, Stderr, Ct, false));
+		return new(new(Exe, Args.ToArray(), Options, Cwd, SnapshotEnvironment(Options), Stdout, Stderr, Ct, true));
 	}
 
 	public partial Command TryCmd(str Exe, IList<str> Args) {
@@ -118,24 +78,7 @@ public partial class Sh{
 		ArgumentException.ThrowIfNullOrWhiteSpace(Exe);
 		ArgumentNullException.ThrowIfNull(Args);
 		var Cwd = NormalizeFileSystemPath(Options.Cwd ?? CurrentDirectory);
-		return new(new(Exe, null, Args.ToArray(), Options, Cwd, Stdout, Stderr, Ct, false));
-	}
-
-	public partial CommandExit Exe(str Command) {
-		return Exe(Command, new CommandOptions());
-	}
-
-	public partial CommandExit Exe(str Command, CommandOptions Options) {
-		return Exe(Command, Options, CancellationToken.None).GetAwaiter().GetResult();
-	}
-
-	public partial Task<CommandExit> Exe(str Command, CT Ct) {
-		return Exe(Command, new CommandOptions(), Ct);
-	}
-
-	public async partial Task<CommandExit> Exe(str Command, CommandOptions Options, CT Ct) {
-		await using var CommandDto = Cmd(Command, Options, Ct);
-		return await CommandDto.Out(Ct).ConfigureAwait(false);
+		return new(new(Exe, Args.ToArray(), Options, Cwd, SnapshotEnvironment(Options), Stdout, Stderr, Ct, false));
 	}
 
 	public partial CommandExit Exe(str FileName, IList<str> Args) {
@@ -155,22 +98,6 @@ public partial class Sh{
 		return await CommandDto.Out(Ct).ConfigureAwait(false);
 	}
 
-	public partial CommandExit TryExe(str Command) {
-		return TryExe(Command, new CommandOptions());
-	}
-
-	public partial CommandExit TryExe(str Command, CommandOptions Options) {
-		return TryExe(Command, Options, CancellationToken.None).GetAwaiter().GetResult();
-	}
-
-	public partial Task<CommandExit> TryExe(str Command, CT Ct) {
-		return TryExe(Command, new CommandOptions(), Ct);
-	}
-
-	public async partial Task<CommandExit> TryExe(str Command, CommandOptions Options, CT Ct) {
-		await using var CommandDto = TryCmd(Command, Options, Ct);
-		return await CommandDto.Out(Ct).ConfigureAwait(false);
-	}
 
 	public partial CommandExit TryExe(str FileName, IList<str> Args) {
 		return TryExe(FileName, Args, new CommandOptions());
@@ -213,6 +140,24 @@ public partial class Sh{
 		Result.Append('\\', BackslashCount * 2);
 		Result.Append('"');
 		return Result.ToString();
+	}
+
+	private IReadOnlyDictionary<str, str> SnapshotEnvironment(CommandOptions Options) {
+		var Comparer = OperatingSystem.IsWindows() ? StringComparer.OrdinalIgnoreCase : StringComparer.Ordinal;
+		var Result = new Dictionary<str, str>(Comparer);
+		foreach (var Pair in System.Environment.GetEnvironmentVariables().Cast<System.Collections.DictionaryEntry>()) {
+			if (Pair.Key is str Name && Pair.Value is str Value)
+				Result[Name] = Value;
+		}
+		if (Options.Env is not null) {
+			foreach (var Pair in Options.Env) {
+				if (Pair.Value is null)
+					Result.Remove(Pair.Key);
+				else
+					Result[Pair.Key] = Pair.Value;
+			}
+		}
+		return Result;
 	}
 
 	public partial void Write(Content Target, Content Source) {

@@ -149,13 +149,11 @@ public sealed partial class Command{
 			RedirectStandardOutput = true,
 			RedirectStandardError = true,
 		};
-		if (Options.Args is not null) {
-			foreach (var Arg in Options.Args)
-				Result.ArgumentList.Add(Arg);
-		}
-		else {
-			Result.Arguments = Options.RawArgs ?? "";
-		}
+		Result.Environment.Clear();
+		foreach (var Pair in Options.Environment)
+			Result.Environment[Pair.Key] = Pair.Value;
+		foreach (var Arg in Options.Args)
+			Result.ArgumentList.Add(Arg);
 		return Result;
 	}
 

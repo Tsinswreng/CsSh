@@ -14,6 +14,9 @@ public sealed partial class Content:IDisposable,IAsyncDisposable{
 	/// 建立時的文字編碼與底層 Stream 所有權設定。
 	public ContentOptions Options{get;}
 
+	/// First text consumption is shared by synchronous and asynchronous callers.
+	private Task<str>? TextTask;
+
 	/// 從普通 .NET Stream 建立 Content。
 	public partial Content(Stream Stream, ContentOptions? Options = null);
 

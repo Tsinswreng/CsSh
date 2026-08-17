@@ -6,7 +6,7 @@ namespace Tsinswreng.CsSh.Test.Domains.CsSh;
 /// Implements tests for listing and recursive glob lookup.
 public partial class TestCssh{
 	public partial void RegisterLsAndFind(ITestNode Node) {
-		var Register = Node.MkTestFnRegister(typeof(TestCssh), [typeof(ShGlobal)], [nameof(ShGlobal.Ls), nameof(ShGlobal.Find)], "FileSystem").Register;
+		var Register = Node.MkTestFnRegister(typeof(TestCssh), [typeof(ShGlobal)], [nameof(ShGlobal.Ls), nameof(ShGlobal.Glob)], "FileSystem").Register;
 		Register(nameof(LsExposesFileAndDirectoryKinds), LsExposesFileAndDirectoryKinds!);
 		Register(nameof(LsExposesBclFileAttributes), LsExposesBclFileAttributes!);
 		Register(nameof(FindMatchesRecursiveRelativeGlob), FindMatchesRecursiveRelativeGlob!);
@@ -52,7 +52,7 @@ public partial class TestCssh{
 			ShGlobal.Write(Root + "/input/a.txt", "a");
 			ShGlobal.Write(Root + "/input/nested/b.txt", "b");
 			ShGlobal.Write(Root + "/input/nested/c.bin", "c");
-			var Found = ShGlobal.Find(Root + "/input/**/*.txt").Select(Entry => Entry.Name).Order().ToArray();
+			var Found = ShGlobal.Glob(Root + "/input/**/*.txt").Select(Entry => Entry.Name).Order().ToArray();
 			Assert.IsTrue(Found.SequenceEqual(["a.txt", "b.txt"]));
 		}
 		finally {

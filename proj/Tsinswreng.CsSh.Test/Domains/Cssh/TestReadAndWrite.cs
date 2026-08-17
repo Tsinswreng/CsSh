@@ -12,5 +12,8 @@ public partial class TestCssh{
 
 	/// Verifies string and ordinary Stream both enter the same Content-based file API.
 	public partial Task<object?> ContentImplicitConversionsWorkWithFileIo(object? O);
+
+	/// Verifies repeated text conversion returns the cached first result.
+	public partial Task<object?> ContentTextIsCached(object? O);
 }
 

@@ -10,7 +10,7 @@ public partial class TestCssh{
 		var Register = Node.MkTestFnRegister(
 			typeof(TestCssh),
 			[typeof(ShGlobal), typeof(ExtnString)],
-			[nameof(Mkdir), nameof(Write), nameof(Read), nameof(Append), nameof(Cp), nameof(Mv), nameof(Ls), nameof(Find), nameof(Exe), nameof(Cmd), nameof(TryCmd), nameof(Command.Text), nameof(Rm)],
+			[nameof(Mkdir), nameof(Write), nameof(Read), nameof(Append), nameof(Cp), nameof(Mv), nameof(Ls), nameof(Glob), nameof(Exe), nameof(Cmd), nameof(TryCmd), nameof(Command.Text), nameof(Rm)],
 			"Integrated").Register;
 		Register(nameof(IntegratedWorkflowCreatesUsesAndRemovesEntrySideData), IntegratedWorkflowCreatesUsesAndRemovesEntrySideData!);
 	}
@@ -49,7 +49,7 @@ public partial class TestCssh{
 				T(Text == "CsSh integration");
 			}
 			var TextFiles = new List<str>();
-			await foreach (var Entry in Find(IntegratedRoot/"**/*.txt", Ct)) {
+			await foreach (var Entry in Glob(IntegratedRoot/"**/*.txt", Ct)) {
 				TextFiles.Add(Entry.Name);
 			}
 			T(TextFiles.Order().SequenceEqual(["final.txt", "message.txt"]));

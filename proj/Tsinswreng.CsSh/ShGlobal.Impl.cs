@@ -11,34 +11,18 @@ public static partial class ShGlobal{
 	public static partial void Echo(str Text){ Sh.Echo(Text); }
 	public static partial Task<nil> Echo(str Text, CT Ct){ return Sh.Echo(Text, Ct); }
 	public static partial void Cd(str Path){ Sh.Cd(Path); }
-	public static partial Command Cmd(str Command){ return Sh.Cmd(Command); }
-	public static partial Command Cmd(str Command, CommandOptions Options){ return Sh.Cmd(Command, Options); }
-	public static partial Command Cmd(str Command, in CT Ct){ return Sh.Cmd(Command, Ct); }
-	public static partial Command Cmd(str Command, CommandOptions Options, CT Ct){ return Sh.Cmd(Command, Options, Ct); }
 	public static partial Command Cmd(str Exe, IList<str> Args){ return Sh.Cmd(Exe, Args); }
 	public static partial Command Cmd(str Exe, IList<str> Args, CommandOptions Options){ return Sh.Cmd(Exe, Args, Options); }
 	public static partial Command Cmd(str Exe, IList<str> Args, CT Ct){ return Sh.Cmd(Exe, Args, Ct); }
 	public static partial Command Cmd(str Exe, IList<str> Args, CommandOptions Options, CT Ct){ return Sh.Cmd(Exe, Args, Options, Ct); }
-	public static partial Command TryCmd(str Command){ return Sh.TryCmd(Command); }
-	public static partial Command TryCmd(str Command, CommandOptions Options){ return Sh.TryCmd(Command, Options); }
-	public static partial Command TryCmd(str Command, in CT Ct){ return Sh.TryCmd(Command, Ct); }
-	public static partial Command TryCmd(str Command, CommandOptions Options, CT Ct){ return Sh.TryCmd(Command, Options, Ct); }
 	public static partial Command TryCmd(str Exe, IList<str> Args){ return Sh.TryCmd(Exe, Args); }
 	public static partial Command TryCmd(str Exe, IList<str> Args, CommandOptions Options){ return Sh.TryCmd(Exe, Args, Options); }
 	public static partial Command TryCmd(str Exe, IList<str> Args, CT Ct){ return Sh.TryCmd(Exe, Args, Ct); }
 	public static partial Command TryCmd(str Exe, IList<str> Args, CommandOptions Options, CT Ct){ return Sh.TryCmd(Exe, Args, Options, Ct); }
-	public static partial CommandExit Exe(str Command){ return Sh.Exe(Command); }
-	public static partial CommandExit Exe(str Command, CommandOptions Options){ return Sh.Exe(Command, Options); }
-	public static partial Task<CommandExit> Exe(str Command, CT Ct){ return Sh.Exe(Command, Ct); }
-	public static partial Task<CommandExit> Exe(str Command, CommandOptions Options, CT Ct){ return Sh.Exe(Command, Options, Ct); }
 	public static partial CommandExit Exe(str Exe, IList<str> Args){ return Sh.Exe(Exe, Args); }
 	public static partial CommandExit Exe(str Exe, IList<str> Args, CommandOptions Options){ return Sh.Exe(Exe, Args, Options); }
 	public static partial Task<CommandExit> Exe(str Exe, IList<str> Args, CT Ct){ return Sh.Exe(Exe, Args, Ct); }
 	public static partial Task<CommandExit> Exe(str Exe, IList<str> Args, CommandOptions Options, CT Ct){ return Sh.Exe(Exe, Args, Options, Ct); }
-	public static partial CommandExit TryExe(str Command){ return Sh.TryExe(Command); }
-	public static partial CommandExit TryExe(str Command, CommandOptions Options){ return Sh.TryExe(Command, Options); }
-	public static partial Task<CommandExit> TryExe(str Command, CT Ct){ return Sh.TryExe(Command, Ct); }
-	public static partial Task<CommandExit> TryExe(str Command, CommandOptions Options, CT Ct){ return Sh.TryExe(Command, Options, Ct); }
 	public static partial CommandExit TryExe(str Exe, IList<str> Args){ return Sh.TryExe(Exe, Args); }
 	public static partial CommandExit TryExe(str Exe, IList<str> Args, CommandOptions Options){ return Sh.TryExe(Exe, Args, Options); }
 	public static partial Task<CommandExit> TryExe(str Exe, IList<str> Args, CT Ct){ return Sh.TryExe(Exe, Args, Ct); }
@@ -63,8 +47,8 @@ public static partial class ShGlobal{
 	public static partial void Mv(str Source, str Destination, MvOptions? Options){ Sh.Mv(Source, Destination, Options); }
 	public static partial Task<nil> Mv(str Source, str Destination, CT Ct){ return Sh.Mv(Source, Destination, Ct); }
 	public static partial Task<nil> Mv(str Source, str Destination, MvOptions? Options, CT Ct){ return Sh.Mv(Source, Destination, Options, Ct); }
-	public static partial IEnumerable<FileSystemInfo> Find(str Pattern){ return Sh.Find(Pattern); }
-	public static partial IAsyncEnumerable<FileSystemInfo> Find(str Pattern, CT Ct){ return Sh.Find(Pattern, Ct); }
+	public static partial IEnumerable<FileSystemInfo> Glob(str Pattern){ return Sh.Glob(Pattern); }
+	public static partial IAsyncEnumerable<FileSystemInfo> Glob(str Pattern, CT Ct){ return Sh.Glob(Pattern, Ct); }
 	public static partial IEnumerable<FileSystemInfo> Ls(str? Path, LsOptions? Options){ return Sh.Ls(Path, Options); }
 	public static partial IAsyncEnumerable<FileSystemInfo> Ls(str? Path, CT Ct){ return Sh.Ls(Path, Ct); }
 	public static partial IAsyncEnumerable<FileSystemInfo> Ls(str? Path, LsOptions? Options, CT Ct){ return Sh.Ls(Path, Options, Ct); }

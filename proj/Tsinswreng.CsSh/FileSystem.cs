@@ -54,14 +54,14 @@ public partial class Sh{
 	/// 异步移动文件或目录；需要覆写既有目标时传入 Options；Ct 必须作为最后一个位置参数传入。
 	public partial Task<nil> Mv(str Source, str Destination, MvOptions? Options, CT Ct);
 
-	/// 惰性查找匹配的文件系统项目，等价于 Bash 的 find。
-	/// Pattern 是跨平台 glob 路径，支持 /、*、? 与 **；例如 Find("src/**/*.csproj")。
+/// 惰性查找匹配的文件系统项目；这是递归枚举加 glob 过滤，不是 Bash find 条件表达式。
+	/// Pattern 是跨平台 glob 路径，支持 /、*、? 与 **；例如 Glob("src/**/*.csproj")。
 	/// 返回 .NET 的 FileSystemInfo；文件为 FileInfo、目录为 DirectoryInfo。
-	/// 可直接读取 Attributes、LastWriteTimeUtc 等 BCL 属性；文件大小使用 FileInfo.Length。
-	public partial IEnumerable<FileSystemInfo> Find(str Pattern);
+/// 可直接读取 Attributes、LastWriteTimeUtc 等 BCL 属性；文件大小使用 FileInfo.Length。
+public partial IEnumerable<FileSystemInfo> Glob(str Pattern);
 
 	/// 异步查找匹配的文件系统项目；Ct 必须作为最后一个位置参数传入。
-	public partial IAsyncEnumerable<FileSystemInfo> Find(str Pattern, CT Ct);
+public partial IAsyncEnumerable<FileSystemInfo> Glob(str Pattern, CT Ct);
 
 	/// 惰性列出目录中的子项，等价于 Bash 的 ls。
 	/// 返回 .NET 的 FileSystemInfo；Path 为 null 时列出当前目录；Recursive 为 false 时仅列出直接子项。

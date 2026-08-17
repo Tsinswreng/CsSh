@@ -9,6 +9,19 @@ public partial class TestCssh{
 		var Register = Node.MkTestFnRegister(typeof(TestCssh), [typeof(ShGlobal)], [nameof(ShGlobal.Read), nameof(ShGlobal.Write)], "FileSystem").Register;
 		Register(nameof(AsyncReadAndWriteNeedNoNullOptions), AsyncReadAndWriteNeedNoNullOptions!);
 		Register(nameof(ContentImplicitConversionsWorkWithFileIo), ContentImplicitConversionsWorkWithFileIo!);
+		Register(nameof(ContentTextIsCached), ContentTextIsCached!);
+	}
+
+	/// Text() and Text(Ct) share one cached consumption instead of advancing the stream twice.
+	public async partial Task<object?> ContentTextIsCached(object? O) {
+		await using Content Source = "cached text";
+		var First = await Source.Text(CancellationToken.None);
+		var Second = Source.Text();
+		var Third = (string)Source;
+		Assert.IsTrue(First == "cached text");
+		Assert.IsTrue(Second == First);
+		Assert.IsTrue(Third == First);
+		return null;
 	}
 
 	/// Normal async script use passes only path, text and the final Ct.

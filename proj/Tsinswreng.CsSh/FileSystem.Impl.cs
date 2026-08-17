@@ -74,9 +74,11 @@ public partial class Sh{
 		var SourcePath = NormalizeFileSystemPath(Source);
 		var DestinationPath = NormalizeFileSystemPath(Destination);
 		if (File.Exists(SourcePath)) {
+			DestinationPath = ResolveDestinationPath(SourcePath, DestinationPath);
 			await CopyFile(SourcePath, DestinationPath, Overwrite, Ct).ConfigureAwait(false);
 		}
 		else if (Directory.Exists(SourcePath)) {
+			DestinationPath = ResolveDestinationPath(SourcePath, DestinationPath);
 			await CopyDirectory(SourcePath, DestinationPath, Overwrite, Ct).ConfigureAwait(false);
 		}
 		else {
@@ -100,11 +102,14 @@ public partial class Sh{
 		if (!File.Exists(SourcePath) && !Directory.Exists(SourcePath)) {
 			throw new FileNotFoundException("Source path does not exist.", SourcePath);
 		}
-		EnsureParentDirectory(DestinationPath);
 		if (File.Exists(SourcePath)) {
+			DestinationPath = ResolveDestinationPath(SourcePath, DestinationPath);
+			EnsureParentDirectory(DestinationPath);
 			File.Move(SourcePath, DestinationPath, Overwrite);
 		}
 		else {
+			DestinationPath = ResolveDestinationPath(SourcePath, DestinationPath);
+			EnsureParentDirectory(DestinationPath);
 			if (Directory.Exists(DestinationPath)) {
 				if (!Overwrite)
 					throw new IOException("Destination directory already exists.");
@@ -117,23 +122,23 @@ public partial class Sh{
 		return NIL;
 	}
 
-	public partial IEnumerable<FileSystemInfo> Find(str Pattern) {
-		var Regex = GlobToRegex(NormalizePath(Pattern));
+	public partial IEnumerable<FileSystemInfo> Glob(str Pattern) {
+		var Regex = GlobToRegex(NormalizePath(NormalizeFileSystemPath(Pattern)));
 		var Root = GlobRoot(Pattern);
 		if (!Directory.Exists(Root))
 			return [];
 		return new DirectoryInfo(Root).EnumerateFileSystemInfos("*", SearchOption.AllDirectories)
-			.Where(Entry => Regex.IsMatch(NormalizePath(Entry.FullName)));
+			.Where(Entry => Regex.IsMatch(ToShellPath(Entry.FullName)));
 	}
 
-	public async partial IAsyncEnumerable<FileSystemInfo> Find(str Pattern, [EnumeratorCancellation] CT Ct) {
-		var Regex = GlobToRegex(NormalizePath(Pattern));
+	public async partial IAsyncEnumerable<FileSystemInfo> Glob(str Pattern, [EnumeratorCancellation] CT Ct) {
+		var Regex = GlobToRegex(NormalizePath(NormalizeFileSystemPath(Pattern)));
 		var Root = GlobRoot(Pattern);
 		if (!Directory.Exists(Root))
 			yield break;
 		foreach (var Entry in new DirectoryInfo(Root).EnumerateFileSystemInfos("*", SearchOption.AllDirectories)) {
 			Ct.ThrowIfCancellationRequested();
-			if (Regex.IsMatch(NormalizePath(Entry.FullName)))
+			if (Regex.IsMatch(ToShellPath(Entry.FullName)))
 				yield return Entry;
 			await Task.Yield();
 		}
@@ -227,7 +232,7 @@ public partial class Sh{
 		var DestinationPath = NormalizeFileSystemPath(Destination);
 		Directory.CreateDirectory(DestinationPath);
 		var FoundAny = false;
-		await foreach (var Entry in Find(Source, Ct)) {
+		await foreach (var Entry in Glob(Source, Ct)) {
 			FoundAny = true;
 			var Target = Destination / Entry.Name;
 			if (Entry is DirectoryInfo) {
@@ -237,7 +242,7 @@ public partial class Sh{
 			}
 			else {
 				// A matched file is the direct source child: Bash replaces an existing counterpart.
-				await CopyFile(Entry.FullName, NormalizeFileSystemPath(Target), true, Ct).ConfigureAwait(false);
+				await CopyFile(Entry.FullName, NormalizeFileSystemPath(Target), Overwrite, Ct).ConfigureAwait(false);
 			}
 		}
 		if (!FoundAny)
@@ -268,12 +273,19 @@ public partial class Sh{
 		var MagicIndex = NormalizedPattern.IndexOfAny(['*', '?']);
 		if (MagicIndex < 0) {
 			var Parent = System.IO.Path.GetDirectoryName(NormalizeFileSystemPath(NormalizedPattern));
-			return string.IsNullOrEmpty(Parent) ? Environment.CurrentDirectory : Parent;
+			return string.IsNullOrEmpty(Parent) ? NormalizeFileSystemPath(".") : Parent;
 		}
 		var Prefix = NormalizedPattern[..MagicIndex];
 		var Separator = Prefix.LastIndexOf('/');
 		var Root = Separator < 0 ? "." : Prefix[..Separator];
 		return NormalizeFileSystemPath(string.IsNullOrEmpty(Root) ? "." : Root);
+	}
+
+	private str ResolveDestinationPath(str SourcePath, str DestinationPath) {
+		if (!Directory.Exists(DestinationPath))
+			return DestinationPath;
+		var SourceName = System.IO.Path.GetFileName(SourcePath.TrimEnd(System.IO.Path.DirectorySeparatorChar, System.IO.Path.AltDirectorySeparatorChar));
+		return System.IO.Path.Combine(DestinationPath, SourceName);
 	}
 
 	private Regex GlobToRegex(str Pattern) {
@@ -302,6 +314,10 @@ public partial class Sh{
 		}
 		Builder.Append('$');
 		return new(Builder.ToString(), OperatingSystem.IsWindows() ? RegexOptions.IgnoreCase : RegexOptions.None);
+	}
+
+	private str ToShellPath(str FileSystemPath) {
+		return NormalizePath(System.IO.Path.GetFullPath(FileSystemPath));
 	}
 
 	private void EnsureParentDirectory(str FileSystemPath) {

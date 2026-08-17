@@ -19,11 +19,11 @@ async Task SyncOne(string SkillName){
 
 	if (await Exists(RepoDir, Ct)) {
 		await Echo("[pull] " + RepoName, Ct);
-		await Exe($"git -C \"{RepoDir}\" pull", Ct);
+		await Exe("git", ["-C", RepoDir, "pull"], Ct);
 	}
 	else {
 		await Echo("[clone] " + RepoName + " <- " + RepoUrl, Ct);
-		await Exe($"git clone \"{RepoUrl}\" \"{RepoDir}\"", Ct);
+		await Exe("git", ["clone", RepoUrl, RepoDir], Ct);
 	}
 
 	await SyncSkillContent(RepoDir, RepoName);
@@ -61,7 +61,7 @@ else {
 			continue;
 
 		await Echo("[pull] " + Repo.Name, Ct);
-		var PullSucceeded = (await TryExe($"git -C \"{Repo.FullName}\" pull", Ct)).IsSuccess;
+		var PullSucceeded = (await TryExe("git", ["-C", Repo.FullName, "pull"], Ct)).IsSuccess;
 		if (!PullSucceeded)
 			await Echo("[warn] pull failed for " + Repo.Name + ", continuing...", Ct);
 

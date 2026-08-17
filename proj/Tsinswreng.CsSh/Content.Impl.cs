@@ -10,12 +10,21 @@ public sealed partial class Content{
 	}
 
 	public partial str Text() {
-		EnsureReadable();
-		using var Reader = new StreamReader(Stream, Options.Encoding ?? Encoding.UTF8, detectEncodingFromByteOrderMarks: true, bufferSize: 81920, leaveOpen: true);
-		return Reader.ReadToEnd();
+		return GetTextTask(CancellationToken.None).GetAwaiter().GetResult();
 	}
 
 	public partial async Task<str> Text(CT Ct) {
+		return await GetTextTask(Ct).WaitAsync(Ct).ConfigureAwait(false);
+	}
+
+	private Task<str> GetTextTask(CT Ct) {
+		lock (this) {
+			TextTask ??= ReadText(Ct);
+			return TextTask;
+		}
+	}
+
+	private async Task<str> ReadText(CT Ct) {
 		EnsureReadable();
 		using var Reader = new StreamReader(Stream, Options.Encoding ?? Encoding.UTF8, detectEncodingFromByteOrderMarks: true, bufferSize: 81920, leaveOpen: true);
 		return await Reader.ReadToEndAsync(Ct).ConfigureAwait(false);

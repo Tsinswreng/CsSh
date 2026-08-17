@@ -11,6 +11,8 @@ public partial class TestCssh{
 		Register(nameof(MvCreatesDestinationParent), MvCreatesDestinationParent!);
 		Register(nameof(AsyncCpAndMvNeedNoNullOptions), AsyncCpAndMvNeedNoNullOptions!);
 		Register(nameof(CpGlobCopiesSourceContents), CpGlobCopiesSourceContents!);
+		Register(nameof(CpFileIntoExistingDirectory), CpFileIntoExistingDirectory!);
+		Register(nameof(MvDirectoryIntoExistingDirectory), MvDirectoryIntoExistingDirectory!);
 	}
 
 	/// Recursive copy retains an empty directory as well as ordinary file content.
@@ -81,6 +83,37 @@ public partial class TestCssh{
 			Assert.IsTrue(await ShGlobal.Exists(Root + "/destination/folder/empty", Ct));
 			Assert.IsTrue(await ShGlobal.Exists(Root + "/destination/folder/kept.txt", Ct));
 			Assert.IsTrue(!await ShGlobal.Exists(Root + "/destination/source", Ct));
+		}
+		finally {
+			TestSupport.Clean(Root);
+		}
+		return null;
+	}
+
+	/// Copying a file to an existing directory appends the source file name, matching cp's destination rule.
+	public async partial Task<object?> CpFileIntoExistingDirectory(object? O) {
+		var Root = TestSupport.NewRoot();
+		try {
+			ShGlobal.Write(Root + "/source.txt", "file");
+			ShGlobal.Mkdir(Root + "/out");
+			await ShGlobal.Cp(Root + "/source.txt", Root + "/out", CancellationToken.None);
+			Assert.IsTrue(ShGlobal.Exists(Root + "/out/source.txt"));
+		}
+		finally {
+			TestSupport.Clean(Root);
+		}
+		return null;
+	}
+
+	/// Moving a directory to an existing directory appends the source directory name.
+	public async partial Task<object?> MvDirectoryIntoExistingDirectory(object? O) {
+		var Root = TestSupport.NewRoot();
+		try {
+			ShGlobal.Write(Root + "/source/data.txt", "dir");
+			ShGlobal.Mkdir(Root + "/out");
+			await ShGlobal.Mv(Root + "/source", Root + "/out", CancellationToken.None);
+			Assert.IsTrue(ShGlobal.Exists(Root + "/out/source/data.txt"));
+			Assert.IsTrue(!ShGlobal.Exists(Root + "/source"));
 		}
 		finally {
 			TestSupport.Clean(Root);

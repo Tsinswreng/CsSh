@@ -1,7 +1,7 @@
 namespace Tsinswreng.CsSh;
 
 /// 一条尚未启动的外部命令。
-/// X 创建该对象不会执行进程；首次异步读取 Result.Stdout、Result.Stderr，或等待 Done 时才启动一次。
+/// Cmd 创建该对象不会执行进程；首次异步读取 Result.Stdout、Result.Stderr，或等待 Done 时才启动一次。
 /// 命令实现会同时排空 stdout 与 stderr，防止调用方暂未消费其中一条流时造成子进程 pipe 阻塞。
 public sealed partial class Command:IDisposable,IAsyncDisposable{
 	/// 僅供 Sh 以完整執行配置建立命令。
@@ -11,7 +11,7 @@ public sealed partial class Command:IDisposable,IAsyncDisposable{
 	public CommandResult Result{get;}
 
 	/// 等待子进程退出并取得退出结果。
-	/// X 创建的命令以非零退出码结束时，此任务抛出 CommandFailedException；TryX 创建的命令始终返回结果。
+	/// Cmd 创建的命令以非零退出码结束时，此任务抛出 CommandFailedException；TryCmd 创建的命令始终返回结果。
 	public Task<CommandExit> Done{
 		get{
 			EnsureStarted();
@@ -54,15 +54,16 @@ public sealed partial class Command:IDisposable,IAsyncDisposable{
 /// Input 為命令的外部標準輸入來源；Cwd 指定子進程工作目錄。
 public sealed record CommandOptions(
 	Content? Input = null,
-	str? Cwd = null);
+	str? Cwd = null,
+	IReadOnlyDictionary<str, str?>? Env = null);
 
 /// Command 的內部執行配置。
 public sealed record CommandRunOptions(
 	str Exe,
-	str? RawArgs,
-	IReadOnlyList<str>? Args,
+	IReadOnlyList<str> Args,
 	CommandOptions Options,
 	str Cwd,
+	IReadOnlyDictionary<str, str> Environment,
 	Content Stdout,
 	Content Stderr,
 	CT Ct,
@@ -87,7 +88,7 @@ public sealed record CommandExit(
 	TimeSpan Duration,
 	bool IsSuccess);
 
-/// Sh.X 遇到非零退出码时抛出的异常。
+/// Sh.Cmd 遇到非零退出码时抛出的异常。
 public sealed partial class CommandFailedException:Exception{
 	/// 失败命令退出时的结果。
 	public CommandExit Exit{get;}

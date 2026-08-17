@@ -42,11 +42,11 @@ await foreach (var Item in Ls("input", Ct))
 	await Echo($"ls: {Item.Name}; file={Item is FileInfo}; dir={Item is DirectoryInfo}; link={Item.Attributes.HasFlag(FileAttributes.ReparsePoint)}; modified={Item.LastWriteTimeUtc:O}", Ct);
 
 // Find 接收 Bash 風格的 glob 路徑，並以 IAsyncEnumerable 惰性輸出結果。
-await foreach (var Item in Find("input/**/*.txt", Ct))
+await foreach (var Item in Glob("input/**/*.txt", Ct))
 	await Echo("find: " + Item.FullName.Replace('\\', '/'), Ct);
 
 // Exe 是一般命令入口：立即執行並把兩條輸出流寫回終端。
-await Exe("dotnet --version", Ct);
+await Exe("dotnet", ["--version"], Ct);
 
 // 可執行檔與參數列表分開時，每一項就是一個參數，不必自行加引號或處理跳脫。
 await Exe("dotnet", ["--version"], Ct);
@@ -56,17 +56,17 @@ var QuotedPath = Q("a path with spaces");
 await Echo("quoted raw-command argument: " + QuotedPath, Ct);
 
 // TryExe 對非零退出碼不丟例外，仍非同步取得結構化退出結果。
-var GitProbe = await TryExe("git rev-parse --is-inside-work-tree", Ct);
+var GitProbe = await TryExe("git", ["rev-parse", "--is-inside-work-tree"], Ct);
 await Echo("git probe success: " + GitProbe.IsSuccess, Ct);
 
 // Write 對應 >、Append 對應 >>；命令結果本身就是 Content，可直接成為來源。
-await using (var Status = TryCmd("git status --short", Ct)) {
+await using (var Status = TryCmd("git", ["status", "--short"], Ct)) {
 	await Write("git-status.log", Status.Result.Stdout, Ct);
 	await Append("git-status.log", Status.Result.Stderr, Ct);
 	await Status.Done;
 }
 
-await using (var History = TryCmd("git log -1 --oneline", Ct)) {
+await using (var History = TryCmd("git", ["log", "-1", "--oneline"], Ct)) {
 	await Write("history.log", History.Result.Stdout, Ct);
 	await Write(Stderr, History.Result.Stderr, Ct);
 	await History.Done;
@@ -74,13 +74,13 @@ await using (var History = TryCmd("git log -1 --oneline", Ct)) {
 
 // Read 回傳 Content，既可直接作 CommandOptions.Input，也可隱式取出普通 Stream。
 await using (Content Input = await Read("input/message.txt", Ct)) {
-	await using var Hash = Cmd("git hash-object --stdin", new CommandOptions(Input), Ct);
+	await using var Hash = Cmd("git", ["hash-object", "--stdin"], new CommandOptions(Input), Ct);
 	await Hash.Out(Ct);
 }
 
 // 命令管道不解析 |：下游命令的 Input 直接指向上游 Command 的 stdout Content。
-await using var Log = Cmd("git log --oneline", Ct);
-await using var LogHash = Cmd("git hash-object --stdin", new(Log.Result.Stdout), Ct);
+await using var Log = Cmd("git", ["log", "--oneline"], Ct);
+await using var LogHash = Cmd("git", ["hash-object", "--stdin"], new(Log.Result.Stdout), Ct);
 await Task.WhenAll(
 	Write(Stdout, LogHash.Result.Stdout, Ct),
 	Write(Stderr, Log.Result.Stderr, Ct),
@@ -89,7 +89,7 @@ await Task.WhenAll(
 	LogHash.Done);
 
 // Null 是跨平台 /dev/null / NUL；此處只丟棄 stderr，stdout 仍顯示在終端。
-await using (var Version = Cmd("dotnet --info", Ct)) {
+await using (var Version = Cmd("dotnet", ["--info"], Ct)) {
 	await Version.Out(Stdout, Null, Ct);
 }
 
