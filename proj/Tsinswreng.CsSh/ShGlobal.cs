@@ -34,6 +34,8 @@ public static partial class ShGlobal{
 	public static partial void UnsetEnv(str Name);
 	public static partial bool Exists(str Path);
 	public static partial Task<bool> Exists(str Path, CT Ct);
+	public static partial FileSystemInfo? FsInfo(str Path);
+	public static partial Task<FileSystemInfo?> FsInfo(str Path, CT Ct);
 	public static partial void Mkdir(str Path);
 	public static partial Task<nil> Mkdir(str Path, CT Ct);
 	public static partial void Rm(str Path);

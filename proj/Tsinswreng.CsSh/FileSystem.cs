@@ -22,6 +22,13 @@ public partial class Sh{
 	/// 异步判断路径是否存在；Ct 必须作为最后一个位置参数传入。
 	public partial Task<bool> Exists(str Path, CT Ct);
 
+	/// 取得文件或目录的 .NET 文件系统信息；路径不存在时返回 null。
+	/// 文件返回 FileInfo，目录返回 DirectoryInfo；其余属性直接使用 BCL 成员读取。
+	public partial FileSystemInfo? FsInfo(str Path);
+
+	/// 异步取得文件或目录的 .NET 文件系统信息；路径不存在时返回 null。
+	public partial Task<FileSystemInfo?> FsInfo(str Path, CT Ct);
+
 	/// 建立目录及所有缺失的父目录；已存在时不报错。
 	public partial void Mkdir(str Path);
 

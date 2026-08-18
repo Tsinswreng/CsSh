@@ -37,6 +37,8 @@ public static partial class ShGlobal{
 	public static partial void UnsetEnv(str Name){ Sh.UnsetEnv(Name); }
 	public static partial bool Exists(str Path){ return Sh.Exists(Path); }
 	public static partial Task<bool> Exists(str Path, CT Ct){ return Sh.Exists(Path, Ct); }
+	public static partial FileSystemInfo? FsInfo(str Path){ return Sh.FsInfo(Path); }
+	public static partial Task<FileSystemInfo?> FsInfo(str Path, CT Ct){ return Sh.FsInfo(Path, Ct); }
 	public static partial void Mkdir(str Path){ Sh.Mkdir(Path); }
 	public static partial Task<nil> Mkdir(str Path, CT Ct){ return Sh.Mkdir(Path, Ct); }
 	public static partial void Rm(str Path){ Sh.Rm(Path); }

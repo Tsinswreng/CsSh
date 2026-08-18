@@ -14,6 +14,7 @@ public partial class TestCssh:ITester{
 		RegisterMkdirAndRm(Node);
 		RegisterCpAndMv(Node);
 		RegisterLsAndFind(Node);
+		RegisterFsInfo(Node);
 		RegisterReadAndWrite(Node);
 		RegisterX(Node);
 		RegisterText(Node);

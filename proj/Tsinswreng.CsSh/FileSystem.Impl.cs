@@ -15,6 +15,31 @@ public partial class Sh{
 		return Task.FromResult(File.Exists(FileSystemPath) || Directory.Exists(FileSystemPath));
 	}
 
+	public partial FileSystemInfo? FsInfo(str Path) {
+		return FsInfo(Path, CancellationToken.None).GetAwaiter().GetResult();
+	}
+
+	public async partial Task<FileSystemInfo?> FsInfo(str Path, CT Ct) {
+		Ct.ThrowIfCancellationRequested();
+		var FileSystemPath = NormalizeFileSystemPath(Path);
+		FileSystemInfo? Result;
+		try {
+			// GetAttributes preserves real access errors while allowing a missing path to map to null.
+			var Attributes = File.GetAttributes(FileSystemPath);
+			Result = Attributes.HasFlag(FileAttributes.Directory)
+				? new DirectoryInfo(FileSystemPath)
+				: new FileInfo(FileSystemPath);
+		}
+		catch (FileNotFoundException) {
+			Result = null;
+		}
+		catch (DirectoryNotFoundException) {
+			Result = null;
+		}
+		await Task.CompletedTask.ConfigureAwait(false);
+		return Result;
+	}
+
 	public partial void Mkdir(str Path) {
 		Mkdir(Path, CancellationToken.None).GetAwaiter().GetResult();
 	}
