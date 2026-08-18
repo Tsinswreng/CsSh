@@ -1,11 +1,22 @@
+using System.Diagnostics;
+using System.IO.Pipelines;
+
 namespace Tsinswreng.CsSh;
 
 /// 一条尚未启动的外部命令。
 /// Cmd 创建该对象不会执行进程；首次异步读取 Result.Stdout、Result.Stderr，或等待 Done 时才启动一次。
 /// 命令实现会同时排空 stdout 与 stderr，防止调用方暂未消费其中一条流时造成子进程 pipe 阻塞。
 public sealed partial class Command:IDisposable,IAsyncDisposable{
+	public readonly CommandRunOptions Options;
+	public readonly Pipe StdoutPipe = new(new PipeOptions(pauseWriterThreshold: long.MaxValue, resumeWriterThreshold: long.MaxValue - 1));
+	public readonly Pipe StderrPipe = new(new PipeOptions(pauseWriterThreshold: long.MaxValue, resumeWriterThreshold: long.MaxValue - 1));
+	public readonly TaskCompletionSource<CommandExit> ExitSource = new(TaskCreationOptions.RunContinuationsAsynchronously);
+	public readonly object Gate = new();
+	public Task? StartTask;
+	public Process? Process;
+	public bool IsDisposed;
 	/// 僅供 Sh 以完整執行配置建立命令。
-	internal partial Command(CommandRunOptions Options);
+	public partial Command(CommandRunOptions Options);
 
 	/// 命令产生的两条标准输出流。
 	public CommandResult Result{get;}
@@ -20,7 +31,7 @@ public sealed partial class Command:IDisposable,IAsyncDisposable{
 	}
 
 	/// 尚未觀察命令時也可被釋放；實作以此欄位保存唯一的退出工作。
-	private readonly Task<CommandExit> ExitTask;
+	public readonly Task<CommandExit> ExitTask;
 
 	/// 让 await Command 等价于 await Command.Done。
 	/// 等待该对象会启动命令，但不会自动转送 Result 中的输出；要转送时使用 Out。

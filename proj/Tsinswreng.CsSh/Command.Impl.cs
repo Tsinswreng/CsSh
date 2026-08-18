@@ -5,16 +5,9 @@ using System.Runtime.CompilerServices;
 namespace Tsinswreng.CsSh;
 
 public sealed partial class Command{
-	private readonly CommandRunOptions Options;
-	private readonly Pipe StdoutPipe = new(new PipeOptions(pauseWriterThreshold: long.MaxValue, resumeWriterThreshold: long.MaxValue - 1));
-	private readonly Pipe StderrPipe = new(new PipeOptions(pauseWriterThreshold: long.MaxValue, resumeWriterThreshold: long.MaxValue - 1));
-	private readonly TaskCompletionSource<CommandExit> ExitSource = new(TaskCreationOptions.RunContinuationsAsynchronously);
-	private readonly object Gate = new();
-	private Task? StartTask;
-	private Process? Process;
-	private bool IsDisposed;
 
-	internal partial Command(CommandRunOptions Options) {
+
+	public partial Command(CommandRunOptions Options) {
 		this.Options = Options;
 		Result = new(
 			new(new CommandReadStream(StdoutPipe.Reader.AsStream(), EnsureStarted), new(LeaveOpen: false)),
