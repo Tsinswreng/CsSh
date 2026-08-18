@@ -6,7 +6,7 @@ using static Tsinswreng.CsSh.ShGlobal;
 
 using var CtSource = new CancellationTokenSource();
 var Ct = CtSource.Token;
-var Root = Path.GetFullPath(CsxDir() / "../..").Replace('\\', '/');
+var Root = System.IO.Path.GetFullPath(CsxDir() / "../..").Replace('\\', '/');
 Cd(Root);
 
 // 每個目錄都依原 Bash 腳本的順序掃描；Find 保持惰性，不會先將所有專案載入記憶體。

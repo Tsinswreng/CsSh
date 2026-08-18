@@ -34,7 +34,7 @@ public sealed partial class Command:IDisposable,IAsyncDisposable{
 
 	/// 非同步消費命令結果：stdout 與 stderr 都覆寫寫入 TargetPath，並等待命令退出。
 	/// 這是腳本將整條命令輸出寫入檔案的簡寫；TargetPath 的父目錄會自動建立。
-	public partial Task<CommandExit> Out(str TargetPath, CT Ct);
+	public partial Task<CommandExit> Out(Pth TargetPath, CT Ct);
 
 	/// 非同步消費命令結果：分別指定 stdout 與 stderr 的輸出目標，並等待命令退出。
 	public partial Task<CommandExit> Out(Content Stdout, Content Stderr, CT Ct);
@@ -54,7 +54,7 @@ public sealed partial class Command:IDisposable,IAsyncDisposable{
 /// Input 為命令的外部標準輸入來源；Cwd 指定子進程工作目錄。
 public sealed record CommandOptions(
 	Content? Input = null,
-	str? Cwd = null,
+	Pth? Cwd = null,
 	IReadOnlyDictionary<str, str?>? Env = null);
 
 /// Command 的內部執行配置。
@@ -62,7 +62,7 @@ public sealed record CommandRunOptions(
 	str Exe,
 	IReadOnlyList<str> Args,
 	CommandOptions Options,
-	str Cwd,
+	Pth Cwd,
 	IReadOnlyDictionary<str, str> Environment,
 	Content Stdout,
 	Content Stderr,

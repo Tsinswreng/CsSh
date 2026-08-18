@@ -12,4 +12,10 @@ public partial class TestCssh{
 
 	/// Verifies asynchronous FsInfo returns null for a missing path.
 	public partial Task<object?> AsyncFsInfoReturnsNullForMissingPath(object? O);
+
+	/// Verifies concise synchronous file and directory predicates.
+	public partial Task<object?> IsFileAndIsDirDistinguishPathKinds(object? O);
+
+	/// Verifies asynchronous predicates accept the final cancellation token overload.
+	public partial Task<object?> AsyncIsFileAndIsDirDistinguishMissingPath(object? O);
 }

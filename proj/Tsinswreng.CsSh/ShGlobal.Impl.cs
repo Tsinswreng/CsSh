@@ -6,11 +6,11 @@ public static partial class ShGlobal{
 	public static Content Stdout => Sh.Stdout;
 	public static Content Stderr => Sh.Stderr;
 	public static Content Null => Sh.Null;
-	public static partial str Pwd(){ return Sh.Pwd(); }
-	public static partial str CsxDir(){ return Sh.CsxDir(); }
+	public static partial Pth Pwd(){ return Sh.Pwd(); }
+	public static partial Pth CsxDir(){ return Sh.CsxDir(); }
 	public static partial void Echo(str Text){ Sh.Echo(Text); }
 	public static partial Task<nil> Echo(str Text, CT Ct){ return Sh.Echo(Text, Ct); }
-	public static partial void Cd(str Path){ Sh.Cd(Path); }
+	public static partial void Cd(Pth Path){ Sh.Cd(Path); }
 	public static partial Command Cmd(str Exe, IList<str> Args){ return Sh.Cmd(Exe, Args); }
 	public static partial Command Cmd(str Exe, IList<str> Args, CommandOptions Options){ return Sh.Cmd(Exe, Args, Options); }
 	public static partial Command Cmd(str Exe, IList<str> Args, CT Ct){ return Sh.Cmd(Exe, Args, Ct); }
@@ -35,29 +35,40 @@ public static partial class ShGlobal{
 	public static partial str? GetEnv(str Name){ return Sh.GetEnv(Name); }
 	public static partial void SetEnv(str Name, str Value){ Sh.SetEnv(Name, Value); }
 	public static partial void UnsetEnv(str Name){ Sh.UnsetEnv(Name); }
-	public static partial bool Exists(str Path){ return Sh.Exists(Path); }
-	public static partial Task<bool> Exists(str Path, CT Ct){ return Sh.Exists(Path, Ct); }
-	public static partial FileSystemInfo? FsInfo(str Path){ return Sh.FsInfo(Path); }
-	public static partial Task<FileSystemInfo?> FsInfo(str Path, CT Ct){ return Sh.FsInfo(Path, Ct); }
-	public static partial void Mkdir(str Path){ Sh.Mkdir(Path); }
-	public static partial Task<nil> Mkdir(str Path, CT Ct){ return Sh.Mkdir(Path, Ct); }
-	public static partial void Rm(str Path){ Sh.Rm(Path); }
-	public static partial Task<nil> Rm(str Path, CT Ct){ return Sh.Rm(Path, Ct); }
-	public static partial void Cp(str Source, str Destination, CpOptions? Options){ Sh.Cp(Source, Destination, Options); }
-	public static partial Task<nil> Cp(str Source, str Destination, CT Ct){ return Sh.Cp(Source, Destination, Ct); }
-	public static partial Task<nil> Cp(str Source, str Destination, CpOptions? Options, CT Ct){ return Sh.Cp(Source, Destination, Options, Ct); }
-	public static partial void Mv(str Source, str Destination, MvOptions? Options){ Sh.Mv(Source, Destination, Options); }
-	public static partial Task<nil> Mv(str Source, str Destination, CT Ct){ return Sh.Mv(Source, Destination, Ct); }
-	public static partial Task<nil> Mv(str Source, str Destination, MvOptions? Options, CT Ct){ return Sh.Mv(Source, Destination, Options, Ct); }
-	public static partial IEnumerable<FileSystemInfo> Glob(str Pattern){ return Sh.Glob(Pattern); }
-	public static partial IAsyncEnumerable<FileSystemInfo> Glob(str Pattern, CT Ct){ return Sh.Glob(Pattern, Ct); }
-	public static partial IEnumerable<FileSystemInfo> Ls(str? Path, LsOptions? Options){ return Sh.Ls(Path, Options); }
-	public static partial IAsyncEnumerable<FileSystemInfo> Ls(str? Path, CT Ct){ return Sh.Ls(Path, Ct); }
-	public static partial IAsyncEnumerable<FileSystemInfo> Ls(str? Path, LsOptions? Options, CT Ct){ return Sh.Ls(Path, Options, Ct); }
-	public static partial Content Read(str Path){ return Sh.Read(Path); }
-	public static partial Task<Content> Read(str Path, CT Ct){ return Sh.Read(Path, Ct); }
+	public static partial bool Exists(Pth Path){ return Sh.Exists(Path); }
+	public static partial Task<bool> Exists(Pth Path, CT Ct){ return Sh.Exists(Path, Ct); }
+	public static partial FileSystemInfo? FsInfo(Pth Path){ return Sh.FsInfo(Path); }
+	public static partial Task<FileSystemInfo?> FsInfo(Pth Path, CT Ct){ return Sh.FsInfo(Path, Ct); }
+	public static partial bool IsFile(Pth Path){ return Sh.IsFile(Path); }
+	public static partial Task<bool> IsFile(Pth Path, CT Ct){ return Sh.IsFile(Path, Ct); }
+	public static partial bool IsDir(Pth Path){ return Sh.IsDir(Path); }
+	public static partial Task<bool> IsDir(Pth Path, CT Ct){ return Sh.IsDir(Path, Ct); }
+	public static partial void Mkdir(Pth Path){ Sh.Mkdir(Path); }
+	public static partial Task<nil> Mkdir(Pth Path, CT Ct){ return Sh.Mkdir(Path, Ct); }
+	public static partial void Rm(Pth Path){ Sh.Rm(Path); }
+	public static partial Task<nil> Rm(Pth Path, CT Ct){ return Sh.Rm(Path, Ct); }
+	public static partial void Cp(Pth Source, Pth Destination, CpOptions? Options){ Sh.Cp(Source, Destination, Options); }
+	public static partial Task<nil> Cp(Pth Source, Pth Destination, CT Ct){ return Sh.Cp(Source, Destination, Ct); }
+	public static partial Task<nil> Cp(Pth Source, Pth Destination, CpOptions? Options, CT Ct){ return Sh.Cp(Source, Destination, Options, Ct); }
+	public static partial void Mv(Pth Source, Pth Destination, MvOptions? Options){ Sh.Mv(Source, Destination, Options); }
+	public static partial Task<nil> Mv(Pth Source, Pth Destination, CT Ct){ return Sh.Mv(Source, Destination, Ct); }
+	public static partial Task<nil> Mv(Pth Source, Pth Destination, MvOptions? Options, CT Ct){ return Sh.Mv(Source, Destination, Options, Ct); }
+	public static partial Pth BaseName(Pth Path){ return Sh.BaseName(Path); }
+	public static partial Pth DirName(Pth Path){ return Sh.DirName(Path); }
+	public static partial Pth RealPath(Pth Path){ return Sh.FullPath(Path); }
+	public static partial IEnumerable<FileSystemInfo> Glob(Pth Pattern){ return Sh.Glob(Pattern); }
+	public static partial IAsyncEnumerable<FileSystemInfo> Glob(Pth Pattern, CT Ct){ return Sh.Glob(Pattern, Ct); }
+	public static partial IEnumerable<FileSystemInfo> Ls(Pth? Path, LsOptions? Options){ return Sh.Ls(Path, Options); }
+	public static partial IAsyncEnumerable<FileSystemInfo> Ls(Pth? Path, CT Ct){ return Sh.Ls(Path, Ct); }
+	public static partial IAsyncEnumerable<FileSystemInfo> Ls(Pth? Path, LsOptions? Options, CT Ct){ return Sh.Ls(Path, Options, Ct); }
+	public static partial Content Read(Pth Path){ return Sh.Read(Path); }
+	public static partial Task<Content> Read(Pth Path, CT Ct){ return Sh.Read(Path, Ct); }
+	public static partial void Write(Pth Path, Content Source){ Sh.Write(Path, Source); }
 	public static partial void Write(str Path, Content Source){ Sh.Write(Path, Source); }
+	public static partial Task<nil> Write(Pth Path, Content Source, CT Ct){ return Sh.Write(Path, Source, Ct); }
 	public static partial Task<nil> Write(str Path, Content Source, CT Ct){ return Sh.Write(Path, Source, Ct); }
+	public static partial void Append(Pth Path, Content Source){ Sh.Append(Path, Source); }
 	public static partial void Append(str Path, Content Source){ Sh.Append(Path, Source); }
+	public static partial Task<nil> Append(Pth Path, Content Source, CT Ct){ return Sh.Append(Path, Source, Ct); }
 	public static partial Task<nil> Append(str Path, Content Source, CT Ct){ return Sh.Append(Path, Source, Ct); }
 }

@@ -35,11 +35,12 @@ public sealed partial class Command{
 		return Out([Target, Target], Ct);
 	}
 
-	public async partial Task<CommandExit> Out(str TargetPath, CT Ct) {
-		var FileSystemPath = System.IO.Path.IsPathRooted(TargetPath)
-			? TargetPath
-			: System.IO.Path.Combine(Options.Cwd, TargetPath);
-		var Parent = Path.GetDirectoryName(FileSystemPath);
+	public async partial Task<CommandExit> Out(Pth TargetPath, CT Ct) {
+		str TargetPathValue = TargetPath;
+		var FileSystemPath = System.IO.Path.IsPathRooted(TargetPathValue)
+			? TargetPathValue
+			: System.IO.Path.Combine((str)Options.Cwd, TargetPathValue);
+		var Parent = System.IO.Path.GetDirectoryName(FileSystemPath);
 		if (!string.IsNullOrEmpty(Parent))
 			Directory.CreateDirectory(Parent);
 		await using var Target = new Content(

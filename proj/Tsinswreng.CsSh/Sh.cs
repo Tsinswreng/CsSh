@@ -20,12 +20,12 @@ public partial class Sh{
 
 	/// 取得当前进程的工作目录。
 	/// 返回路径统一使用正斜杠，因而可直接与 Cssh 的所有路径 API 拼接。
-	public partial str Pwd();
+	public partial Pth Pwd();
 
 	/// 取得当前 csx 脚本所在的目录。
 	/// 与 Pwd 不同：无论调用者从哪个工作目录启动 dotnet script，此值均指向脚本文件的父目录。
 	/// 返回路径统一使用正斜杠。
-	public partial str CsxDir();
+	public partial Pth CsxDir();
 
 	/// 同步输出一行文本到标准输出，等价于 Bash 的 echo。
 	public partial void Echo(str Text);
@@ -36,7 +36,7 @@ public partial class Sh{
 	/// 切换当前进程的工作目录，等价于 Bash 的 cd。
 	/// Cssh 的所有路径参数均接受正斜杠；例如 Cd("src/app") 在 Windows、Linux 与 macOS 上含义相同。
 	/// 此变更影响后续相对路径和未显式传入 Cwd 的 X 命令。
-	public partial void Cd(str Path);
+	public partial void Cd(Pth Path);
 
 	/// 建立尚未啟動的命令；Args 的每一項是一個完整參數，不需呼叫方處理引號或跳脫。
 	public partial Command Cmd(str Exe, IList<str> Args);

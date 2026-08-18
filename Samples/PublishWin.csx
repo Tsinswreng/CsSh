@@ -7,7 +7,7 @@ using static Tsinswreng.CsSh.ShGlobal;
 
 using var CtSource = new CancellationTokenSource();
 var Ct = CtSource.Token;
-var Root = Path.GetFullPath(CsxDir() / "../..").Replace('\\', '/');
+var Root = System.IO.Path.GetFullPath(CsxDir() / "../..").Replace('\\', '/');
 var ProjectDir = Root / "Ngan.Dict/Ngan.Dict.Frontend/proj/Ngan.Dict.Windows";
 
 // 先保留上次發布結果；所有路徑都從腳本位置推得，不依賴啟動 cwd。

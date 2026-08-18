@@ -3,21 +3,21 @@ using System.Text;
 namespace Tsinswreng.CsSh;
 
 public partial class Sh{
-	private string CurrentDirectory;
+	private Pth CurrentDirectory;
 
 	public partial Sh() {
-		CurrentDirectory = Path.GetFullPath(Environment.CurrentDirectory).Replace('\\', '/');
+		CurrentDirectory = System.IO.Path.GetFullPath(Environment.CurrentDirectory).Replace('\\', '/');
 		Stdin = new(Console.OpenStandardInput());
 		Stdout = new(Console.OpenStandardOutput());
 		Stderr = new(Console.OpenStandardError());
 		Null = new(Stream.Null);
 	}
 
-	public partial str Pwd() {
+	public partial Pth Pwd() {
 		return NormalizePath(CurrentDirectory);
 	}
 
-	public partial str CsxDir() {
+	public partial Pth CsxDir() {
 		var ScriptPath = Environment.GetCommandLineArgs()
 			.FirstOrDefault(Argument => Argument.EndsWith(".csx", StringComparison.OrdinalIgnoreCase));
 		if (ScriptPath is null)
@@ -36,8 +36,9 @@ public partial class Sh{
 		return NIL;
 	}
 
-	public partial void Cd(str Path) {
-		var Candidate = Path.Replace('\\', '/');
+	public partial void Cd(Pth Path) {
+		str PathValue = Path;
+		var Candidate = PathValue.Replace('\\', '/');
 		if (!System.IO.Path.IsPathRooted(Candidate))
 			Candidate = System.IO.Path.Combine(CurrentDirectory, Candidate);
 		CurrentDirectory = System.IO.Path.GetFullPath(Candidate).Replace('\\', '/');
@@ -187,8 +188,9 @@ public partial class Sh{
 		return Path.Replace('\\', '/');
 	}
 
-	internal str NormalizeFileSystemPath(str Path) {
-		var Candidate = Path.Replace('/', System.IO.Path.DirectorySeparatorChar);
+	internal str NormalizeFileSystemPath(Pth Path) {
+		str PathValue = Path;
+		var Candidate = PathValue.Replace('/', System.IO.Path.DirectorySeparatorChar);
 		if (!System.IO.Path.IsPathRooted(Candidate))
 			Candidate = System.IO.Path.Combine(CurrentDirectory, Candidate);
 		return Candidate;

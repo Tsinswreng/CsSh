@@ -9,5 +9,11 @@ public partial class TestCssh{
 
 	/// Verifies separator normalization and boundary joining.
 	public partial Task<object?> PathDivisionJoinsAndNormalizesSeparators(object? O);
+
+	/// Verifies shell-style basename and dirname extraction.
+	public partial Task<object?> BaseNameAndDirNameExtractPathParts(object? O);
+
+	/// Verifies RealPath resolves through the Sh instance current directory.
+	public partial Task<object?> RealPathUsesShCurrentDirectory(object? O);
 }
 

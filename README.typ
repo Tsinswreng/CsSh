@@ -70,7 +70,17 @@ await Write("logs/version.txt", "created by Cssh\n", Ct);
 var Project = Root / "src" / "MyProject";
 ```
 
-	`Path` 相關的通用操作仍直接使用 .NET `System.IO.Path`；Cssh 不重複包裝已經足夠簡潔的 BCL API。
+	`Path` 是 Cssh 的路徑值類型，與 `string` 隱式互轉；它承擔路徑拼接與未來路徑值成員，不把這些成員污染到所有 `string`。通用 BCL 操作仍直接使用 `System.IO.Path`。
+
+	Bash 風格的路徑函數掛在 `Sh`，因此可直接配合 `using static ShGlobal` 使用：
+
+```cs
+BaseName("src/app/config.json"); // config.json
+DirName("src/app/config.json");  // src/app
+RealPath("src/../README.typ");   // 依目前 Cd 展開的絕對路徑
+```
+
+	`RealPath` 對應 `System.IO.Path.GetFullPath`：它不要求路徑存在，也不解析符號連結。
 ]
 
 #H[外部命令][
@@ -210,6 +220,17 @@ if (Entry is FileInfo File) {
 }
 if (Entry is DirectoryInfo) {
 	Console.WriteLine("directory");
+}
+```
+
+	最常用的檔案與目錄分支使用 `IsFile`、`IsDir`；二者在路徑不存在時都返回 `false`：
+
+```cs
+if (IsFile("settings.json")) {
+	// Bash: if -f settings.json
+}
+if (IsDir("ExternalRsrc")) {
+	// Bash: if -d ExternalRsrc
 }
 ```
 ]

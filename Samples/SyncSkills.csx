@@ -4,7 +4,7 @@
 using Tsinswreng.CsSh;
 using static Tsinswreng.CsSh.ShGlobal;
 
-var Root = Path.GetFullPath(CsxDir() / "../..").Replace('\\', '/');
+var Root = System.IO.Path.GetFullPath(CsxDir() / "../..").Replace('\\', '/');
 var SkillsRepoDir = Root / ".Tsinswreng/Skills";
 var AgentsSkillsDir = Root / ".agents/skills";
 var GitHubBaseUrl = "https://github.com/Tsinswreng";
