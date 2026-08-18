@@ -70,7 +70,7 @@ await Write("logs/version.txt", "created by Cssh\n", Ct);
 var Project = Root / "src" / "MyProject";
 ```
 
-	`Path` 是 Cssh 的路徑值類型，與 `string` 隱式互轉；它承擔路徑拼接與未來路徑值成員，不把這些成員污染到所有 `string`。通用 BCL 操作仍直接使用 `System.IO.Path`。
+	`Pth` 是 Cssh 的路徑值類型，與 `string` 隱式互轉；它承擔路徑拼接與未來路徑值成員，不把這些成員污染到所有 `string`。通用 BCL 操作仍直接使用 `System.IO.Path`。
 
 	Bash 風格的路徑函數掛在 `Sh`，因此可直接配合 `using static ShGlobal` 使用：
 
@@ -80,7 +80,15 @@ DirName("src/app/config.json");  // src/app
 RealPath("src/../README.typ");   // 依目前 Cd 展開的絕對路徑
 ```
 
-	`RealPath` 對應 `System.IO.Path.GetFullPath`：它不要求路徑存在，也不解析符號連結。
+	`ShGlobal.RealPath` 是預設 Shell 的靜態便利名；持有 `Sh` 實例時，對應成員名為 `Sh.FullPath`：
+
+```cs
+var Sh = new Tsinswreng.CsSh.Sh();
+Sh.Cd("build");
+var Absolute = Sh.FullPath("../README.typ");
+```
+
+	二者都對應 `System.IO.Path.GetFullPath`：不要求路徑存在，也不解析符號連結。
 ]
 
 #H[外部命令][
@@ -123,7 +131,7 @@ if (!Result.Exit.IsSuccess) {
 
 	Cssh 不提供完整命令字符串重載，因此不解析 `|`、`>`、`&&`、Shell 變量展開等語法。`IList<string>` 只解決參數邊界，不等價於 Shell。
 
-	`Q(string)` 保留作為命令字符串或其他外部格式需要的安全參數引用工具；正常命令調用優先使用參數列表。
+	`Q(string)` 保留給「把一個值嵌入另一個程式所接收的命令字符串」的場景，例如傳給 `cmd.exe /c` 或其他自行解析命令列的外部工具。它不是 Cssh 命令呼叫的必需步驟；正常 `Cmd`／`Exe`／`TryCmd`／`TryExe` 一律優先使用參數列表。
 ]
 
 #H[輸入、輸出與管道][
@@ -284,6 +292,85 @@ dotnet run --project proj/Tsinswreng.CsSh.Test/Tsinswreng.CsSh.Test.csproj --no-
 ```
 
 	測試應按聲明與實現分離：測試聲明放在 `TestXxx.cs`，實現與註冊放在 `TestXxx.Impl.cs`。
+]
+
+#H[CI/CD、NuGet 發布與版本升級][
+	本專案使用 GitHub Actions 執行 CI/CD。定義 `CI` 爲每次提交後自動建置、測試與打包的驗證流程；定義 `CD` 爲在驗證成功後，把指定版本發布至 nuget.org 的流程。
+
+	目前套件的預設版本爲 `0.1.0-alpha`，套件 ID 爲 `Tsinswreng.CsSh`，授權爲 MIT。NuGet 套件同時產生 `.nupkg` 與供除錯使用的 `.snupkg` 符號套件。
+
+	#H[工作流與觸發條件][
+		專案有兩個工作流：
+
+		- `.github/workflows/verify.yml` 是驗證工作流。推送至 `master`、對 `master` 建立 Pull Request，或在 GitHub Actions 手動執行時觸發。它會還原依賴、以 Release 組態建置、執行測試，並以 `0.1.0-alpha.ci.<執行編號>` 打包驗證。驗證產物會作為 Actions artifact 上傳，但不會發布至 nuget.org。
+		- `.github/workflows/publish.yml` 是發布工作流。推送符合 `v*` 的 Git tag 時觸發；也可以從 GitHub Actions 手動執行並輸入版本。tag 觸發時，tag 名稱必須是 `v` 加上版本號，例如 `v0.1.0-alpha`；工作流會移除開頭的 `v`，得到 NuGet 套件版本 `0.1.0-alpha`。
+
+		發布工作流的步驟固定如下：
+
+		1. 還原依賴、Release 建置、執行全部測試。
+		2. 以 tag 中的版本覆蓋打包時的 `PackageVersion`，產生 NuGet 與符號套件。
+		3. 使用 GitHub environment 中的 `NUGET_API_KEY` 推送 `.nupkg` 至 nuget.org。
+		4. tag 觸發時，推送成功後建立同名的 GitHub Release，並自動產生 Release notes。
+
+		手動執行發布工作流不會建立 GitHub Release；它適合在已有 tag 或需要重試 NuGet 推送時使用。正常發版應使用 tag。
+	]
+
+	#H[首次設定][
+		發布者需要在 GitHub repository 的 Settings -> Environments 新增名為 `nuget` 的 environment，再在該 environment 的 Secrets 新增 `NUGET_API_KEY`。
+
+		`NUGET_API_KEY` 是 nuget.org 產生的推送金鑰。應限制它僅能推送套件 ID `Tsinswreng.CsSh`，並且只保存於 GitHub Secret；不得寫入專案檔、工作流檔、Git commit 或本機設定檔。
+
+		若為 environment 設定 required reviewers，發布工作流會在推送前等待核准；若未設定，工作流會直接使用該 environment 的 Secret 執行。
+	]
+
+	#H[本地發布前驗證][
+		先在準備發布的 commit 上執行下列命令。它們與 CI/CD 使用相同的 Release 建置、測試與打包順序，但不會推送任何套件：
+
+```sh
+dotnet restore proj/Tsinswreng.CsSh.Test/Tsinswreng.CsSh.Test.csproj --ignore-failed-sources --no-cache
+dotnet build proj/Tsinswreng.CsSh.Test/Tsinswreng.CsSh.Test.csproj --configuration Release --no-restore
+dotnet run --project proj/Tsinswreng.CsSh.Test/Tsinswreng.CsSh.Test.csproj --configuration Release --no-build --no-restore
+dotnet pack proj/Tsinswreng.CsSh/Tsinswreng.CsSh.csproj --configuration Release --no-build --no-restore --output artifacts/nuget-validation -p:PackageVersion=0.1.0-alpha
+```
+
+		`--ignore-failed-sources` 只適合本機已有依賴快取、但暫時無法連線 NuGet 來源時使用。若本機沒有快取，應移除該參數並先排除網路問題。`artifacts/` 已被 Git 忽略。
+	]
+
+	#H[發布首版][
+		先提交準備發布的原始碼、README、套件設定與工作流。確認 `master` 上的 CI 已通過後，在同一個 commit 建立並推送 tag：
+
+```sh
+git switch master
+git pull --ff-only origin master
+git tag v0.1.0-alpha
+git push origin v0.1.0-alpha
+```
+
+		推送 tag 後，在 GitHub Actions 查看 `Publish NuGet package`。它成功完成才代表 NuGet 套件已發布；GitHub tag 已推送不代表套件必然已上架。
+	]
+
+	#H[版本升級規則][
+		本專案以 `MAJOR.MINOR.PATCH` 表示穩定版版本號：`MAJOR` 表示不相容的公開 API 變更，`MINOR` 表示向後相容的新功能，`PATCH` 表示向後相容的修正。`-alpha` 是預發版後綴，預發版使用者必須明確選取預發版本。
+
+		版本選擇與 tag 對照如下：
+
+		- 修正預發版問題：`0.1.0-alpha.1`，tag 為 `v0.1.0-alpha.1`。
+		- 在 0.x 階段加入相容功能：`0.2.0-alpha`，tag 為 `v0.2.0-alpha`。
+		- API 已穩定時的第一個正式版：`0.1.0`，tag 為 `v0.1.0`。
+		- 正式版的相容修正：`0.1.1`，tag 為 `v0.1.1`。
+		- 正式版的相容功能：`0.2.0`，tag 為 `v0.2.0`。
+		- 有破壞性變更：`1.0.0` 或後續的下一個主版本，tag 例如 `v1.0.0`。
+
+		`Tsinswreng.CsSh.csproj` 的 `<Version>` 是本地建置與未覆蓋打包的預設版本。tag 發布時，以 tag 解析出的版本為準。因此升級發布時必須同時更新 `<Version>` 與建立同版本 tag，避免本地建置顯示的版本和已發布版本不一致。
+
+		升級流程為：修改程式與文件 -> 本地驗證 -> 提交並推送 `master` -> 確認 Verify 成功 -> 更新 `<Version>` 至下一版並提交 -> 再次確認 Verify 成功 -> 建立並推送相同版本的 `v...` tag。
+	]
+
+	#H[失敗處理與不可變版本][
+		nuget.org 中已成功發布的相同版本不可覆蓋。若發布後發現程式、套件內容或 metadata 有問題，必須修正後發布一個更高版本；不可刪除 tag 後重新使用原版本。
+
+		發布工作流的 NuGet 推送使用 `--skip-duplicate`。因此「套件已推送成功，但建立 GitHub Release 失敗」時，可以重新執行工作流：既有套件會被略過，工作流會再次嘗試建立 Release。若 workflow 在測試或打包階段失敗，修正問題後應建立新的版本與 tag，不應把修正提交到既有發版 tag 所指向的 commit。
+	]
 ]
 
 #H[設計邊界][

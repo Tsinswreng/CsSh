@@ -10,7 +10,7 @@ public partial class TestCssh{
 		var Register = Node.MkTestFnRegister(
 			typeof(TestCssh),
 			[typeof(ShGlobal), typeof(ExtnString)],
-			[nameof(Mkdir), nameof(Write), nameof(Read), nameof(Append), nameof(Cp), nameof(Mv), nameof(Ls), nameof(Glob), nameof(Exe), nameof(Cmd), nameof(TryCmd), nameof(Command.Text), nameof(Rm)],
+			[nameof(Mkdir), nameof(Write), nameof(Read), nameof(Append), nameof(Cp), nameof(Mv), nameof(FsInfo), nameof(IsFile), nameof(IsDir), nameof(BaseName), nameof(DirName), nameof(RealPath), nameof(Ls), nameof(Glob), nameof(Exe), nameof(Cmd), nameof(TryCmd), nameof(TryExe), nameof(Command.Text), nameof(Rm)],
 			"Integrated").Register;
 		Register(nameof(IntegratedWorkflowCreatesUsesAndRemovesEntrySideData), IntegratedWorkflowCreatesUsesAndRemovesEntrySideData!);
 	}
@@ -33,7 +33,18 @@ public partial class TestCssh{
 				T(Text == "CsSh integration");
 			}
 
-			// Ls reports item type; Cp/Mv then produce the state for Find to inspect.
+			// Pth syntax composes portable paths; the common metadata predicates stay concise in the workflow.
+			T(BaseName(SourceFile) == "message.txt");
+			T(DirName(SourceFile) == InputDir);
+			T(await IsFile(SourceFile, Ct));
+			T(await IsDir(InputDir, Ct));
+			var SourceInfo = await FsInfo(SourceFile, Ct);
+			T(SourceInfo is FileInfo File && File.Length == "CsSh integration".Length);
+			var LocalSh = new Sh();
+			LocalSh.Cd(IntegratedRoot);
+			T(LocalSh.FullPath("input/message.txt") == RealPath(SourceFile));
+
+			// Ls reports item type; Cp/Mv then produce the state for Glob to inspect.
 			var Entries = new Dictionary<str, FileSystemInfo>();
 			await foreach (var Entry in Ls(IntegratedRoot, Ct)) {
 				Entries.Add(Entry.Name, Entry);
@@ -86,6 +97,8 @@ public partial class TestCssh{
 				T(!Result.Exit.IsSuccess);
 				T(!string.IsNullOrWhiteSpace(Result.Stderr));
 			}
+			// TryExe consumes output immediately but preserves a non-zero exit for ordinary control flow.
+			T(!(await TryExe("dotnet", ["--definitely-invalid-option"], Ct)).IsSuccess);
 		}
 		finally {
 			// The same test case owns teardown, so a failed mid-workflow assertion cannot leave its data behind.

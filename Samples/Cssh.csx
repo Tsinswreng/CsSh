@@ -8,7 +8,7 @@ using static Tsinswreng.CsSh.ShGlobal;
 using var CtSource = new CancellationTokenSource();
 var Ct = CtSource.Token;
 var StartDir = Pwd();
-var Root = CsxDir();
+Pth Root = CsxDir();
 var SampleDir = Root / "artifacts" / "cssh-sample";
 
 // 每個範例均在樣本目錄內操作，避免修改腳本以外的檔案。
@@ -41,23 +41,37 @@ await Rm("input/moved.txt", Ct);
 await foreach (var Item in Ls("input", Ct))
 	await Echo($"ls: {Item.Name}; file={Item is FileInfo}; dir={Item is DirectoryInfo}; link={Item.Attributes.HasFlag(FileAttributes.ReparsePoint)}; modified={Item.LastWriteTimeUtc:O}", Ct);
 
-// Find 接收 Bash 風格的 glob 路徑，並以 IAsyncEnumerable 惰性輸出結果。
+// FsInfo 回傳 BCL 的 FileInfo 或 DirectoryInfo；IsFile 與 IsDir 則對應 Bash 的 -f、-d 常用判斷。
+var MessageInfo = await FsInfo("input/message.txt", Ct);
+await Echo("info: file=" + (MessageInfo is FileInfo) + "; dir=" + (MessageInfo is DirectoryInfo), Ct);
+await Echo("is file=" + await IsFile("input/message.txt", Ct) + "; is dir=" + await IsDir("input", Ct), Ct);
+
+// BaseName、DirName、RealPath 都依目前 Shell 的 Cwd 工作；Pth 可直接和 string 隱式互轉。
+var MessagePath = (Pth)"input/message.txt";
+await Echo("base=" + BaseName(MessagePath) + "; dir=" + DirName(MessagePath), Ct);
+await Echo("absolute=" + RealPath(MessagePath), Ct);
+
+// Glob 接收 Bash 風格的 glob 路徑，並以 IAsyncEnumerable 惰性輸出結果。
 await foreach (var Item in Glob("input/**/*.txt", Ct))
 	await Echo("find: " + Item.FullName.Replace('\\', '/'), Ct);
 
 // Exe 是一般命令入口：立即執行並把兩條輸出流寫回終端。
 await Exe("dotnet", ["--version"], Ct);
 
-// 可執行檔與參數列表分開時，每一項就是一個參數，不必自行加引號或處理跳脫。
-await Exe("dotnet", ["--version"], Ct);
-
-// 保留單一命令字串的寫法時，用 Q 將含空白、引號或結尾反斜槓的值轉為一個參數。
+// Q 只用於另一個程式要自行解析命令字串時；CsSh 本身的 Exe/Cmd 不需要它。
 var QuotedPath = Q("a path with spaces");
-await Echo("quoted raw-command argument: " + QuotedPath, Ct);
+await Echo("quoted external-command fragment: " + QuotedPath, Ct);
 
 // TryExe 對非零退出碼不丟例外，仍非同步取得結構化退出結果。
 var GitProbe = await TryExe("git", ["rev-parse", "--is-inside-work-tree"], Ct);
 await Echo("git probe success: " + GitProbe.IsSuccess, Ct);
+
+// TryCmd 適合要讀取失敗輸出後自行決定如何處理的場景。
+await using (var Probe = TryCmd("dotnet", ["--definitely-invalid-option"], Ct)) {
+	var ProbeResult = await Probe.Text(Ct);
+	await Echo("try cmd success: " + ProbeResult.Exit.IsSuccess, Ct);
+	await Echo("try cmd stderr: " + ProbeResult.Stderr.Trim(), Ct);
+}
 
 // Write 對應 >、Append 對應 >>；命令結果本身就是 Content，可直接成為來源。
 await using (var Status = TryCmd("git", ["status", "--short"], Ct)) {

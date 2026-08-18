@@ -1,0 +1,45 @@
+name: Verify
+
+on:
+  pull_request:
+    branches: [master]
+  push:
+    branches: [master]
+  workflow_dispatch:
+
+# A normal branch build proves that the package can be built, but it never
+# publishes or needs a NuGet credential.
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Check out source
+        uses: actions/checkout@v4
+
+      - name: Set up .NET 10 SDK
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 10.0.x
+
+      - name: Restore test project and its library dependency
+        run: dotnet restore proj/Tsinswreng.CsSh.Test/Tsinswreng.CsSh.Test.csproj
+
+      - name: Build release binaries
+        run: dotnet build proj/Tsinswreng.CsSh.Test/Tsinswreng.CsSh.Test.csproj --configuration Release --no-restore
+
+      - name: Run the project test runner
+        run: dotnet run --project proj/Tsinswreng.CsSh.Test/Tsinswreng.CsSh.Test.csproj --configuration Release --no-build --no-restore
+
+      - name: Pack a CI-only validation package
+        run: dotnet pack proj/Tsinswreng.CsSh/Tsinswreng.CsSh.csproj --configuration Release --no-build --no-restore --output artifacts -p:PackageVersion=0.1.0-alpha.ci.${{ github.run_number }}
+
+      - name: Upload validation packages
+        uses: actions/upload-artifact@v4
+        with:
+          name: nuget-validation-package
+          path: artifacts/*
+          if-no-files-found: error

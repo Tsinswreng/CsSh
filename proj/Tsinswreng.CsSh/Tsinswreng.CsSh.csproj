@@ -8,6 +8,28 @@
 		<Nullable>enable</Nullable>
 		<IsAotCompatible>true</IsAotCompatible>
 		<VerifyReferenceAotCompatibility>true</VerifyReferenceAotCompatibility>
+
+		<!-- NuGet package identity and discovery metadata. -->
+		<PackageId>Tsinswreng.CsSh</PackageId>
+		<Version>0.1.0-alpha</Version>
+		<Authors>Tsinswreng</Authors>
+		<Description>A cross-platform, NativeAOT-compatible C# shell infrastructure library for build, release, synchronization, and toolchain scripts.</Description>
+		<PackageTags>shell;process;filesystem;script;csx;nativeaot;cross-platform</PackageTags>
+		<PackageLicenseExpression>MIT</PackageLicenseExpression>
+		<PackageRequireLicenseAcceptance>false</PackageRequireLicenseAcceptance>
+		<Copyright>Copyright (c) 2026 Tsinswreng</Copyright>
+		<PackageProjectUrl>https://github.com/Tsinswreng/CsSh</PackageProjectUrl>
+		<RepositoryUrl>https://github.com/Tsinswreng/CsSh</RepositoryUrl>
+		<RepositoryType>git</RepositoryType>
+
+		<!-- Produce debuggable packages without coupling ordinary builds to packing. -->
+		<IncludeSymbols>true</IncludeSymbols>
+		<SymbolPackageFormat>snupkg</SymbolPackageFormat>
+		<IncludeSource>true</IncludeSource>
+		<DebugType>portable</DebugType>
+		<PublishRepositoryUrl>true</PublishRepositoryUrl>
+		<EmbedUntrackedSources>true</EmbedUntrackedSources>
+		<ContinuousIntegrationBuild Condition="'$(GITHUB_ACTIONS)' == 'true'">true</ContinuousIntegrationBuild>
 	</PropertyGroup>
 
 </Project>
