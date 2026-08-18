@@ -7,7 +7,7 @@ public static class ExtnString{
 	extension(string z){
 		/// Joins two path segments without duplicating the separator at their boundary.
 		/// An empty segment is ignored; a leading slash in B is treated as a separator rather than a new rooted path.
-		public static string operator / (
+		public static Path operator / (
 			string a, string b
 		){
 			// Normalize first so Windows literals and Cssh's forward-slash paths compose identically.
@@ -19,7 +19,8 @@ public static class ExtnString{
 				return Left.TrimEnd('/');
 
 			// Keep an intentional root such as / or C:/, while owning exactly one joining separator.
-			return Left.TrimEnd('/') + "/" + Right.TrimStart('/');
+			var combined = Left.TrimEnd('/') + "/" + Right.TrimStart('/');
+			return new Path(combined);
 		}
 	}
 }

@@ -60,6 +60,8 @@ public partial class Sh{
 
 	/// 异步移动文件或目录；需要覆写既有目标时传入 Options；Ct 必须作为最后一个位置参数传入。
 	public partial Task<nil> Mv(str Source, str Destination, MvOptions? Options, CT Ct);
+	
+	public partial Path BaseName(Path FullPath);
 
 /// 惰性查找匹配的文件系统项目；这是递归枚举加 glob 过滤，不是 Bash find 条件表达式。
 	/// Pattern 是跨平台 glob 路径，支持 /、*、? 与 **；例如 Glob("src/**/*.csproj")。
