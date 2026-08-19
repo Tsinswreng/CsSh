@@ -1,45 +1,87 @@
+# YAML 用縮排表示父子層級；同一層的字段屬於同一個對象。
+# 以 `#` 開頭的是註釋，GitHub 不會執行；`${{ ... }}` 是 GitHub Actions 表達式。
+# `name` 是工作流名稱，會顯示在 GitHub repository 的 Actions 頁面。
 name: Verify
 
+# `on` 定義「什麼 GitHub 事件會啟動這個工作流」。它不是普通的開關。
 on:
+  # `pull_request` 表示 Pull Request 建立、更新等相關事件可以觸發工作流。
   pull_request:
+    # `branches` 是分支過濾器；這裡只檢查目標分支為 master 的 PR。
     branches: [master]
+  # `push` 表示有 commit 被推送到 repository 時可以觸發工作流。
   push:
+    # 這裡只接受推送到 master 的 commit，其他分支不會由此規則觸發。
     branches: [master]
+  # `workflow_dispatch` 開啟 Actions 頁面的「Run workflow」手動執行按鈕。
+  # 冒號後沒有 inputs，表示手動執行時不需要填寫表單參數。
   workflow_dispatch:
 
-# A normal branch build proves that the package can be built, but it never
-# publishes or needs a NuGet credential.
+# `permissions` 設定工作流自動取得的 GITHUB_TOKEN 權限。
 permissions:
+  # `contents` 控制 repository 內容（原始碼、commit、tag 等）的權限。
+  # `read` 只允許讀取；verify 不發布套件，也不建立 Release，所以不需要 write。
   contents: read
 
+# `jobs` 是所有要執行的 job 的映射表；同一層可以定義多個 job。
 jobs:
+  # `verify` 是 job 的識別鍵，供工作流內部辨識這個 job；它不是顯示名稱。
   verify:
+    # `runs-on` 指定承載 job 的 runner 類型；ubuntu-latest 是 GitHub 維護的 Linux 映像。
     runs-on: ubuntu-latest
 
+    # `steps` 是按順序執行的步驟清單；前一步失敗時，後續步驟預設不再執行。
     steps:
+      # `-` 表示清單中的一個 step。`name` 是該步驟在 Actions 頁面顯示的名稱。
       - name: Check out source
+        # `uses` 呼叫別人提供的可重用 Action；@v4 表示使用 checkout Action 的 v4 主版本。
         uses: actions/checkout@v4
 
       - name: Set up .NET 10 SDK
+        # 這個 step 的 `name` 是 Actions 頁面上的顯示文字，不會影響命令內容。
+        # setup-dotnet Action 負責安裝並設定 dotnet CLI 使用的 SDK。
         uses: actions/setup-dotnet@v4
+        # `with` 是傳給 uses Action 的輸入參數映射表，不是環境變量。
         with:
+          # `dotnet-version` 指定 SDK 版本；10.0.x 表示使用最新的 .NET 10 SDK 修訂版。
           dotnet-version: 10.0.x
 
       - name: Restore test project and its library dependency
+        # 這個 step 的 `name` 只用於顯示和閱讀，不是 dotnet 專案名稱。
+        # `run` 在 runner shell 中執行一條命令；命令退出碼非 0 時此 step 失敗。
         run: dotnet restore proj/Tsinswreng.CsSh.Test/Tsinswreng.CsSh.Test.csproj
+        # `dotnet restore` 下載並解析 NuGet 依賴；最後的 csproj 路徑是要還原的專案。
 
       - name: Build release binaries
+        # 這個 step 的 `name` 描述本步驟用途，GitHub 會用它顯示執行狀態。
+        # `dotnet build` 編譯測試專案及其 ProjectReference 指向的主 library。
+        # `--configuration Release` 使用 Release 組態；`--no-restore` 不再次還原依賴。
         run: dotnet build proj/Tsinswreng.CsSh.Test/Tsinswreng.CsSh.Test.csproj --configuration Release --no-restore
 
       - name: Run the project test runner
+        # 這個 step 的 `name` 是人類可讀的標題；真正執行的內容由下面的 `run` 決定。
+        # `dotnet run` 執行測試專案的 Main；這個 repository 的測試 runner 是可執行專案。
+        # `--project` 指定專案；`--configuration Release` 選用 Release 輸出；
+        # `--no-build` 和 `--no-restore` 分別禁止重建與重新還原，使用前一步的結果。
         run: dotnet run --project proj/Tsinswreng.CsSh.Test/Tsinswreng.CsSh.Test.csproj --configuration Release --no-build --no-restore
 
       - name: Pack a CI-only validation package
+        # 這個 step 的 `name` 是打包步驟的顯示標題。
+        # `dotnet pack` 將主 library 專案打包成 NuGet 套件。
+        # `--configuration Release` 選用 Release；`--no-build`、`--no-restore` 重用前面的結果；
+        # `--output artifacts` 指定產物目錄；`-p:PackageVersion=...` 覆蓋套件版本屬性。
+        # `${{ github.run_number }}` 是 GitHub 為每個工作流執行遞增的編號，形成 CI 專用版本。
         run: dotnet pack proj/Tsinswreng.CsSh/Tsinswreng.CsSh.csproj --configuration Release --no-build --no-restore --output artifacts -p:PackageVersion=0.1.0-alpha.ci.${{ github.run_number }}
 
       - name: Upload validation packages
+        # 這個 step 的 `name` 是上傳 artifact 步驟的顯示標題。
+        # upload-artifact Action 將 runner 上的檔案保存到本次 workflow run，供之後下載。
         uses: actions/upload-artifact@v4
+        # `with` 為 upload-artifact 提供它需要的輸入字段。
         with:
+          # `name` 是 Actions artifact 的顯示名稱；它不會改變 NuGet PackageId。
           name: nuget-validation-package
+          # `path` 是要上傳的檔案路徑；* 匹配 artifacts 目錄下的所有產物。
           path: artifacts/*
+          # `if-no-files-found: error` 表示找不到匹配檔案時讓 step 失敗，而不是靜默跳過。
           if-no-files-found: error

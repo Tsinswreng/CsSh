@@ -1,81 +1,146 @@
+#  `${{ ... }}` 是 GitHub Actions 表達式。
+# `name` 是工作流名稱，會顯示在 GitHub repository 的 Actions 頁面。
 name: Publish NuGet package
 
+# `on` 定義「什麼 GitHub 事件會啟動這個工作流」。這個工作流有兩種入口。
 on:
+  # `push` 表示有 ref 被推送到 repository 時可以觸發工作流。
   push:
+    # `tags` 是 tag 名稱過濾器；只有匹配下列 glob 的 tag 才會觸發。
     tags:
+      # `-` 表示清單項目；`v*` 表示以字母 v 開頭的任意 tag，例如 v0.1.0-alpha。
       - 'v*'
+  # `workflow_dispatch` 開啟 Actions 頁面的手動執行按鈕。
   workflow_dispatch:
+    # `inputs` 定義手動執行時顯示給操作者填寫的表單字段。
     inputs:
+      # `version` 是這個輸入字段的識別鍵，後面以 inputs.version 讀取。
       version:
+        # `description` 是手動執行表單中顯示的提示文字。
         description: 'Exact NuGet version to publish, for example 0.1.0-alpha.'
+        # `required: true` 表示手動執行時不能留空；這不取代腳本中的格式驗證。
         required: true
+        # `type: string` 表示輸入是文字，不是 number、boolean 或 environment 選擇器。
         type: string
 
-# The NuGet API key is read only by the push step.  contents: write lets the
-# workflow create the GitHub Release after NuGet accepts the package.
+# `permissions` 設定工作流自動取得的 GITHUB_TOKEN 權限。
 permissions:
+  # `contents: write` 允許最後的 gh release create 建立 GitHub Release；
+  # 發布 NuGet 本身使用 NUGET_API_KEY，不是靠這個 contents 權限。
   contents: write
 
+# `jobs` 是所有要執行的 job 的映射表。
 jobs:
+  # `publish` 是 job 的識別鍵，供工作流內部辨識這個 job；它不是顯示名稱。
   publish:
+    # `runs-on` 指定 job 執行的 runner 類型；ubuntu-latest 是 GitHub 維護的 Linux 映像。
     runs-on: ubuntu-latest
+    # `environment` 將 job 綁定到名為 nuget 的 GitHub Environment。
+    # 該 Environment 提供 NUGET_API_KEY Secret，也可以配置 required reviewers 審批發布。
     environment: nuget
 
+    # `steps` 是按順序執行的步驟清單；前一步失敗時，後續步驟預設不再執行。
     steps:
       - name: Check out the release commit with tags
+        # `name` 是步驟在 Actions 頁面顯示的名稱；`uses` 呼叫 checkout Action。
         uses: actions/checkout@v4
+        # `with` 是傳給 checkout Action 的輸入字段映射。
         with:
+          # `fetch-depth: 0` 取消淺層 checkout，取得完整 Git 歷史與 tags。
           fetch-depth: 0
 
       - name: Set up .NET 10 SDK
+        # 這個 step 的 `name` 是 Actions 頁面上的顯示文字，不會影響 SDK 版本。
+        # setup-dotnet Action 安裝並設定 dotnet CLI 使用的 SDK。
         uses: actions/setup-dotnet@v4
+        # `with` 是 Action 輸入字段映射。
         with:
+          # `dotnet-version` 指定 SDK 版本；10.0.x 表示最新的 .NET 10 修訂版。
           dotnet-version: 10.0.x
 
       - name: Resolve and validate package version
+        # 這個 step 的 `name` 描述本步驟用途；真正執行的 Bash 由下面的 `run` 決定。
+        # `id` 是這個 step 的識別鍵；後面以 steps.version.outputs.value 讀取其輸出。
         id: version
+        # `shell` 指定 run 腳本使用的命令解釋器；這裡需要 Bash 的 [[ ]] 與正則表達式語法。
         shell: bash
+        # `env` 定義只提供給本 step 的環境變量；它不會永久寫入 runner 或 repository。
         env:
+          # `INPUT_VERSION` 接收手動表單的 inputs.version；tag 觸發時通常為空。
           INPUT_VERSION: ${{ inputs.version }}
+          # `REF_TYPE` 是 GitHub context 的 ref 類型；此處用它判斷是否由 tag 觸發。
           REF_TYPE: ${{ github.ref_type }}
+          # `REF_NAME` 是去除 refs/heads 或 refs/tags 前綴後的名稱，例如 v0.1.0-alpha。
           REF_NAME: ${{ github.ref_name }}
+        # `run: |` 表示以下縮排行是同一段多行 shell 腳本，而非單條 YAML 字符串。
         run: |
+          # Bash 的 if、[[ ]] 和 == 用來判斷這次是否由 tag 觸發。
           if [[ "$REF_TYPE" == "tag" ]]; then
+            # `${REF_NAME#v}` 是 Bash 參數替換：若開頭是 v，就移除這個 v。
             VERSION="${REF_NAME#v}"
+            # `||` 表示任一條件成立即可失敗；=~ 用正則表達式檢查 SemVer 格式。
+            # 這裡要求 MAJOR.MINOR.PATCH，並允許可選的 -prerelease 後綴。
             if [[ "$VERSION" == "$REF_NAME" || ! "$VERSION" =~ ^[0-9]+\.[0-9]+\.[0-9]+(-[0-9A-Za-z][0-9A-Za-z.-]*)?$ ]]; then
+              # `>&2` 把錯誤文字寫到 stderr；`exit 1` 以失敗狀態結束本 step。
               echo "Release tags must use vMAJOR.MINOR.PATCH with an optional prerelease suffix." >&2
               exit 1
             fi
           else
+            # 手動觸發時使用表單輸入的版本，不從當前分支名稱猜版本。
             VERSION="$INPUT_VERSION"
+            # 同樣用正則表達式驗證手動輸入，避免把不合法版本送到 NuGet。
             if [[ ! "$VERSION" =~ ^[0-9]+\.[0-9]+\.[0-9]+(-[0-9A-Za-z][0-9A-Za-z.-]*)?$ ]]; then
               echo "The manually supplied version is not a supported NuGet version." >&2
               exit 1
             fi
           fi
 
+          # GITHUB_OUTPUT 是 GitHub 提供的特殊文件路徑；寫入 key=value 後會成為 step output。
           echo "value=$VERSION" >> "$GITHUB_OUTPUT"
 
       - name: Restore test project and its library dependency
+        # 這個 step 的 `name` 只用於顯示，不是 dotnet 專案名稱。
+        # `run` 執行 dotnet 命令；restore 下載測試專案及主 library 的 NuGet 依賴。
         run: dotnet restore proj/Tsinswreng.CsSh.Test/Tsinswreng.CsSh.Test.csproj
 
       - name: Build release binaries
+        # 這個 step 的 `name` 描述 Release 編譯步驟，GitHub 會用它顯示執行狀態。
+        # build 編譯測試專案及被引用的 library；--configuration Release 選 Release 組態；
+        # --no-restore 重用 restore step 已產生的依賴資訊。
         run: dotnet build proj/Tsinswreng.CsSh.Test/Tsinswreng.CsSh.Test.csproj --configuration Release --no-restore
 
       - name: Run the project test runner
+        # 這個 step 的 `name` 是測試步驟的顯示標題。
+        # run 執行測試專案的 Main；--project 指定 csproj；--no-build 與 --no-restore
+        # 讓它使用已驗證的 Release 輸出，不在發布前偷偷重建或重新還原。
         run: dotnet run --project proj/Tsinswreng.CsSh.Test/Tsinswreng.CsSh.Test.csproj --configuration Release --no-build --no-restore
 
       - name: Create NuGet and symbol packages
+        # 這個 step 的 `name` 是 NuGet 打包步驟的顯示標題。
+        # pack 將主 library 打成 NuGet 套件；--output artifacts 指定輸出目錄；
+        # -p:PackageVersion 使用前一個 step 的輸出覆蓋 csproj 預設版本。
         run: dotnet pack proj/Tsinswreng.CsSh/Tsinswreng.CsSh.csproj --configuration Release --no-build --no-restore --output artifacts -p:PackageVersion=${{ steps.version.outputs.value }}
 
       - name: Push packages to nuget.org
+        # 這個 step 的 `name` 是套件推送步驟的顯示標題。
+        # `env` 將 Secret 只注入這個 step；其他 step 不會因 env 繼承而看到 API key。
         env:
+          # `NUGET_API_KEY` 是 nuget.org 的推送金鑰；右側 expression 從 nuget Environment Secret 讀取。
           NUGET_API_KEY: ${{ secrets.NUGET_API_KEY }}
+        # `dotnet nuget push` 上傳套件；source 指定 nuget.org；api-key 傳入金鑰；
+        # skip-duplicate 讓重試時已存在的同版本套件被跳過。glob 只匹配 .nupkg，不匹配 .snupkg。
         run: dotnet nuget push 'artifacts/*.nupkg' --source https://api.nuget.org/v3/index.json --api-key "$NUGET_API_KEY" --skip-duplicate
 
       - name: Create GitHub Release for tag-triggered publications
+        # 這個 step 的 `name` 是 GitHub Release 建立步驟的顯示標題。
+        # `if` 是 step 條件；只有 ref_type 等於 tag 時才執行，手動執行會跳過。
         if: github.ref_type == 'tag'
+        # `env` 為 gh 命令提供 GitHub API 認證和要操作的 tag 名稱。
         env:
+          # GH_TOKEN 是 GitHub CLI 約定讀取的 token；github.token 是本次工作流的 GITHUB_TOKEN。
           GH_TOKEN: ${{ github.token }}
+          # TAG_NAME 是 tag 的短名稱，供 gh release create 使用。
           TAG_NAME: ${{ github.ref_name }}
+        # `gh release create` 建立 Release；--verify-tag 要求 tag 已存在；
+        # --generate-notes 自動產生 release notes；--title 設定 Release 標題。
         run: gh release create "$TAG_NAME" --verify-tag --generate-notes --title "$TAG_NAME"
