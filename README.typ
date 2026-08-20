@@ -1,26 +1,24 @@
 #import "@preview/tsinswreng-auto-heading:0.1.0": auto-heading
 #let H = auto-heading
 
-#set page(
-	margin: (x: 2.4cm, y: 2.2cm),
-)
+
 #set text(size: 10.5pt)
 
 #align(center)[
 	#text(size: 24pt, weight: "bold")[Tsinswreng.CsSh]
 	#v(0.4em)
-	跨平台、AOT 兼容的 C# Shell 基础设施库
+	跨平台、AOT 兼容的 C\# Shell 基础设施库
 ]
 
 #H[定位][
-	`Tsinswreng.CsSh` 為 C# 與 `.csx` 腳本提供接近 Bash 使用體驗的基礎 API，主要服務於構建、發布、同步與工具鏈腳本。
+	`Tsinswreng.CsSh` 為 C\# 與 `.csx` 腳本提供接近 Bash 使用體驗的基礎 API，主要服務於構建、發布、同步與工具鏈腳本。
 
 	它不重新實現 Bash，也不解析完整 Shell 語法。外部工具仍由 .NET `Process` 啟動；Cssh 負責提供一致的命令、流、文件系統、工作目錄與環境配置接口。
 
 	主要特點：
 
 	- 支持 Windows、Linux 與 macOS 的正斜槓路徑。
-	- 支持 NativeAOT 兼容的普通 C# 程序與 `.csx` 腳本。
+	- 支持 NativeAOT 兼容的普通 C\# 程序與 `.csx` 腳本。
 	- 命令參數使用 `IList<string>` 分隔，避免呼叫方手動引號與跳脫。
 	- stdout、stderr、stdin 統一使用 `Content` 流載體。
 	- 文件操作提供同步與以 `CancellationToken` 結尾的異步入口。
@@ -382,5 +380,5 @@ git push origin v0.1.0-alpha
 	- Shell glob 自動展開到外部命令參數。
 	- Shell 變量展開與引號解析。
 
-	這些能力分別由 `Content` 管道、`Out`／`Write` 重定向、C# 控制流、`Glob` 文件枚舉、`CommandOptions.Env` 與參數列表取代。這樣腳本使用的是可檢查、可組合的 C# API，而不是另一套未完整實現的 Shell 解析器。
+	這些能力分別由 `Content` 管道、`Out`／`Write` 重定向、C\# 控制流、`Glob` 文件枚舉、`CommandOptions.Env` 與參數列表取代。這樣腳本使用的是可檢查、可組合的 C\# API，而不是另一套未完整實現的 Shell 解析器。
 ]
