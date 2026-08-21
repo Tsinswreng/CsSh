@@ -42,7 +42,7 @@ public partial class TestCssh{
 			T(SourceInfo is FileInfo File && File.Length == "CsSh integration".Length);
 			var LocalSh = new Sh();
 			LocalSh.Cd(IntegratedRoot);
-			T(LocalSh.FullPath("input/message.txt") == RealPath(SourceFile));
+			T(LocalSh.FullPath("input/message.txt") == FullPath(SourceFile));
 
 			// Ls reports item type; Cp/Mv then produce the state for Glob to inspect.
 			var Entries = new Dictionary<str, FileSystemInfo>();

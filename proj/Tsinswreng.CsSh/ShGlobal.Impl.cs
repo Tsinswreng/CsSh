@@ -55,7 +55,7 @@ public static partial class ShGlobal{
 	public static partial Task<nil> Mv(Pth Source, Pth Destination, MvOptions? Options, CT Ct){ return Sh.Mv(Source, Destination, Options, Ct); }
 	public static partial Pth BaseName(Pth Path){ return Sh.BaseName(Path); }
 	public static partial Pth DirName(Pth Path){ return Sh.DirName(Path); }
-	public static partial Pth RealPath(Pth Path){ return Sh.FullPath(Path); }
+	public static partial Pth FullPath(Pth Path){ return Sh.FullPath(Path); }
 	public static partial IEnumerable<FileSystemInfo> Glob(Pth Pattern){ return Sh.Glob(Pattern); }
 	public static partial IAsyncEnumerable<FileSystemInfo> Glob(Pth Pattern, CT Ct){ return Sh.Glob(Pattern, Ct); }
 	public static partial IEnumerable<FileSystemInfo> Ls(Pth? Path, LsOptions? Options){ return Sh.Ls(Path, Options); }

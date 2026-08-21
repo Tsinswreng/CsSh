@@ -52,7 +52,7 @@ public static partial class ShGlobal{
 	public static partial Task<nil> Mv(Pth Source, Pth Destination, MvOptions? Options, CT Ct);
 	public static partial Pth BaseName(Pth Path);
 	public static partial Pth DirName(Pth Path);
-	public static partial Pth RealPath(Pth Path);
+	public static partial Pth FullPath(Pth Path);
 	public static partial IEnumerable<FileSystemInfo> Glob(Pth Pattern);
 	public static partial IAsyncEnumerable<FileSystemInfo> Glob(Pth Pattern, CT Ct);
 	public static partial IEnumerable<FileSystemInfo> Ls(Pth? Path = null, LsOptions? Options = null);
