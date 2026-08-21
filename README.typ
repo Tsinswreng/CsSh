@@ -70,15 +70,16 @@ var Project = Root / "src" / "MyProject";
 
 	`Pth` 是 Cssh 的路徑值類型，與 `string` 隱式互轉；它承擔路徑拼接與未來路徑值成員，不把這些成員污染到所有 `string`。通用 BCL 操作仍直接使用 `System.IO.Path`。
 
-	Bash 風格的路徑函數掛在 `Sh`，因此可直接配合 `using static ShGlobal` 使用：
+	路徑元件函數掛在 `Sh`，因此可直接配合 `using static ShGlobal` 使用。
+	`BaseName` 與 `DirName` 採用 .NET `System.IO.Path` 的元件擷取語義；根路徑及沒有父目錄的輸入返回空字串：
 
 ```cs
 BaseName("src/app/config.json"); // config.json
 DirName("src/app/config.json");  // src/app
-RealPath("src/../README.typ");   // 依目前 Cd 展開的絕對路徑
+FullPath("src/../README.typ");   // 依目前 Cd 展開的絕對路徑
 ```
 
-	`ShGlobal.RealPath` 是預設 Shell 的靜態便利名；持有 `Sh` 實例時，對應成員名為 `Sh.FullPath`：
+	`ShGlobal.FullPath` 是預設 Shell 的靜態便利名；持有 `Sh` 實例時，亦可使用同名成員：
 
 ```cs
 var Sh = new Tsinswreng.CsSh.Sh();

@@ -75,10 +75,12 @@ public partial class Sh{
 	/// 异步移动文件或目录；需要覆写既有目标时传入 Options；Ct 必须作为最后一个位置参数传入。
 	public partial Task<nil> Mv(Pth Source, Pth Destination, MvOptions? Options, CT Ct);
 	
-	/// 取得路徑的最後一段檔案或目錄名稱，等價於 Bash basename。
+	/// 取得路徑的最後一段檔案或目錄名稱。
+	/// 採用 System.IO.Path 的元件擷取語義；根路徑會回傳空字串。
 	public partial Pth BaseName(Pth Path);
 
-	/// 取得路徑的父目錄部分，等價於 Bash dirname。
+	/// 取得路徑的父目錄部分。
+	/// 採用 System.IO.Path 的元件擷取語義；沒有父目錄或僅為根路徑時回傳空字串。
 	public partial Pth DirName(Pth Path);
 
 	/// 依此 Sh 的目前工作目錄展開為絕對、規範化路徑。

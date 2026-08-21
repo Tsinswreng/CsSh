@@ -19,7 +19,7 @@ public partial class Sh{
 
 	/// Resolves a relative value through this Sh instance rather than the process-wide current directory.
 	public partial Pth FullPath(Pth Path) {
-		return new(NormalizePath(System.IO.Path.GetFullPath(NormalizeFileSystemPath(Path))));
+		return new(NormalizePath(System.IO.Path.GetFullPath(Path, CurrentDirectory)));
 	}
 
 	public partial bool Exists(Pth Path) {
@@ -28,7 +28,7 @@ public partial class Sh{
 
 	public partial Task<bool> Exists(Pth Path, CT Ct) {
 		Ct.ThrowIfCancellationRequested();
-		var FileSystemPath = NormalizeFileSystemPath(Path);
+		var FileSystemPath = (str)FullPath(Path);
 		return Task.FromResult(File.Exists(FileSystemPath) || Directory.Exists(FileSystemPath));
 	}
 
@@ -38,7 +38,7 @@ public partial class Sh{
 
 	public async partial Task<FileSystemInfo?> FsInfo(Pth Path, CT Ct) {
 		Ct.ThrowIfCancellationRequested();
-		var FileSystemPath = NormalizeFileSystemPath(Path);
+		var FileSystemPath = (str)FullPath(Path);
 		FileSystemInfo? Result;
 		try {
 			// GetAttributes preserves real access errors while allowing a missing path to map to null.
@@ -79,7 +79,7 @@ public partial class Sh{
 
 	public partial Task<nil> Mkdir(Pth Path, CT Ct) {
 		Ct.ThrowIfCancellationRequested();
-		Directory.CreateDirectory(NormalizeFileSystemPath(Path));
+		Directory.CreateDirectory(FullPath(Path));
 		return Task.FromResult(NIL);
 	}
 
@@ -89,7 +89,7 @@ public partial class Sh{
 
 	public partial Task<nil> Rm(Pth Path, CT Ct) {
 		Ct.ThrowIfCancellationRequested();
-		var FileSystemPath = NormalizeFileSystemPath(Path);
+		var FileSystemPath = (str)FullPath(Path);
 		FileAttributes Attributes;
 		try {
 			// Do not use File.Exists/Directory.Exists here: both APIs intentionally
@@ -129,8 +129,8 @@ public partial class Sh{
 			await CopyMatches(Source, Destination, Overwrite, Ct).ConfigureAwait(false);
 			return NIL;
 		}
-		var SourcePath = NormalizeFileSystemPath(Source);
-		var DestinationPath = NormalizeFileSystemPath(Destination);
+		var SourcePath = (str)FullPath(Source);
+		var DestinationPath = (str)FullPath(Destination);
 		if (File.Exists(SourcePath)) {
 			DestinationPath = ResolveDestinationPath(SourcePath, DestinationPath);
 			await CopyFile(SourcePath, DestinationPath, Overwrite, Ct).ConfigureAwait(false);
@@ -155,8 +155,8 @@ public partial class Sh{
 
 	public partial async Task<nil> Mv(Pth Source, Pth Destination, MvOptions? Options, CT Ct) {
 		var Overwrite = Options?.Overwrite ?? false;
-		var SourcePath = NormalizeFileSystemPath(Source);
-		var DestinationPath = NormalizeFileSystemPath(Destination);
+		var SourcePath = (str)FullPath(Source);
+		var DestinationPath = (str)FullPath(Destination);
 		if (!File.Exists(SourcePath) && !Directory.Exists(SourcePath)) {
 			throw new FileNotFoundException("Source path does not exist.", SourcePath);
 		}
@@ -181,7 +181,7 @@ public partial class Sh{
 	}
 
 	public partial IEnumerable<FileSystemInfo> Glob(Pth Pattern) {
-		var Regex = GlobToRegex(NormalizePath(NormalizeFileSystemPath(Pattern)));
+		var Regex = GlobToRegex(FullPath(Pattern));
 		var Root = GlobRoot(Pattern);
 		if (!Directory.Exists(Root))
 			return [];
@@ -190,7 +190,7 @@ public partial class Sh{
 	}
 
 	public async partial IAsyncEnumerable<FileSystemInfo> Glob(Pth Pattern, [EnumeratorCancellation] CT Ct) {
-		var Regex = GlobToRegex(NormalizePath(NormalizeFileSystemPath(Pattern)));
+		var Regex = GlobToRegex(FullPath(Pattern));
 		var Root = GlobRoot(Pattern);
 		if (!Directory.Exists(Root))
 			yield break;
@@ -203,7 +203,7 @@ public partial class Sh{
 	}
 
 	public partial IEnumerable<FileSystemInfo> Ls(Pth? Path, LsOptions? Options) {
-		var Root = NormalizeFileSystemPath(Path ?? new("."));
+		var Root = (str)FullPath(Path ?? new("."));
 		var Option = Options?.Recursive == true ? SearchOption.AllDirectories : SearchOption.TopDirectoryOnly;
 		return new DirectoryInfo(Root).EnumerateFileSystemInfos("*", Option);
 	}
@@ -213,7 +213,7 @@ public partial class Sh{
 	}
 
 	public async partial IAsyncEnumerable<FileSystemInfo> Ls(Pth? Path, LsOptions? Options, [EnumeratorCancellation] CT Ct) {
-		var Root = NormalizeFileSystemPath(Path ?? new("."));
+		var Root = (str)FullPath(Path ?? new("."));
 		var Option = Options?.Recursive == true ? SearchOption.AllDirectories : SearchOption.TopDirectoryOnly;
 		foreach (var Entry in new DirectoryInfo(Root).EnumerateFileSystemInfos("*", Option)) {
 			Ct.ThrowIfCancellationRequested();
@@ -228,7 +228,7 @@ public partial class Sh{
 
 	public partial Task<Content> Read(Pth Path, CT Ct) {
 		Ct.ThrowIfCancellationRequested();
-		Stream Result = new FileStream(NormalizeFileSystemPath(Path), FileMode.Open, FileAccess.Read, FileShare.Read, 81920, useAsync: true);
+		Stream Result = new FileStream(FullPath(Path), FileMode.Open, FileAccess.Read, FileShare.Read, 81920, useAsync: true);
 		return Task.FromResult<Content>(new(Result, new(LeaveOpen: false)));
 	}
 
@@ -242,7 +242,7 @@ public partial class Sh{
 
 	public partial async Task<nil> Write(Pth Path, Content Source, CT Ct) {
 		ArgumentNullException.ThrowIfNull(Source);
-		var FileSystemPath = NormalizeFileSystemPath(Path);
+		var FileSystemPath = (str)FullPath(Path);
 		EnsureParentDirectory(FileSystemPath);
 		await using var Target = new FileStream(FileSystemPath, FileMode.Create, FileAccess.Write, FileShare.None, 81920, useAsync: true);
 		await Source.Stream.CopyToAsync(Target, Ct).ConfigureAwait(false);
@@ -263,7 +263,7 @@ public partial class Sh{
 
 	public partial async Task<nil> Append(Pth Path, Content Source, CT Ct) {
 		ArgumentNullException.ThrowIfNull(Source);
-		var FileSystemPath = NormalizeFileSystemPath(Path);
+		var FileSystemPath = (str)FullPath(Path);
 		EnsureParentDirectory(FileSystemPath);
 		await using var Target = new FileStream(FileSystemPath, FileMode.Append, FileAccess.Write, FileShare.None, 81920, useAsync: true);
 		await Source.Stream.CopyToAsync(Target, Ct).ConfigureAwait(false);
@@ -303,7 +303,7 @@ public partial class Sh{
 
 	/// Copies every glob match as a direct child of Destination, preserving Bash's source/* shape.
 	private async Task CopyMatches(str Source, str Destination, bool Overwrite, CT Ct) {
-		var DestinationPath = NormalizeFileSystemPath(Destination);
+		var DestinationPath = (str)FullPath(Destination);
 		Directory.CreateDirectory(DestinationPath);
 		var FoundAny = false;
 		await foreach (var Entry in Glob(Source, Ct)) {
@@ -316,7 +316,7 @@ public partial class Sh{
 			}
 			else {
 				// A matched file is the direct source child: Bash replaces an existing counterpart.
-				await CopyFile(Entry.FullName, NormalizeFileSystemPath(Target), Overwrite, Ct).ConfigureAwait(false);
+			await CopyFile(Entry.FullName, FullPath(Target), Overwrite, Ct).ConfigureAwait(false);
 			}
 		}
 		if (!FoundAny)
@@ -346,13 +346,13 @@ public partial class Sh{
 		var NormalizedPattern = NormalizePath(Pattern);
 		var MagicIndex = NormalizedPattern.IndexOfAny(['*', '?']);
 		if (MagicIndex < 0) {
-			var Parent = System.IO.Path.GetDirectoryName(NormalizeFileSystemPath(NormalizedPattern));
-			return string.IsNullOrEmpty(Parent) ? NormalizeFileSystemPath(".") : Parent;
+			var Parent = System.IO.Path.GetDirectoryName(FullPath(NormalizedPattern));
+			return string.IsNullOrEmpty(Parent) ? FullPath(".") : Parent;
 		}
 		var Prefix = NormalizedPattern[..MagicIndex];
 		var Separator = Prefix.LastIndexOf('/');
 		var Root = Separator < 0 ? "." : Prefix[..Separator];
-		return NormalizeFileSystemPath(string.IsNullOrEmpty(Root) ? "." : Root);
+		return FullPath(string.IsNullOrEmpty(Root) ? "." : Root);
 	}
 
 	private str ResolveDestinationPath(str SourcePath, str DestinationPath) {

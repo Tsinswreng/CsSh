@@ -10,7 +10,7 @@ public partial class TestCssh{
 		var Register = Node.MkTestFnRegister(
 			typeof(TestCssh),
 			[typeof(ShGlobal), typeof(ExtnString)],
-			[nameof(Mkdir), nameof(Write), nameof(Read), nameof(Append), nameof(Cp), nameof(Mv), nameof(FsInfo), nameof(IsFile), nameof(IsDir), nameof(BaseName), nameof(DirName), nameof(RealPath), nameof(Ls), nameof(Glob), nameof(Exe), nameof(Cmd), nameof(TryCmd), nameof(TryExe), nameof(Command.Text), nameof(Rm)],
+			[nameof(Mkdir), nameof(Write), nameof(Read), nameof(Append), nameof(Cp), nameof(Mv), nameof(FsInfo), nameof(IsFile), nameof(IsDir), nameof(BaseName), nameof(DirName), nameof(FullPath), nameof(Ls), nameof(Glob), nameof(Exe), nameof(Cmd), nameof(TryCmd), nameof(TryExe), nameof(Command.Text), nameof(Rm)],
 			"Integrated").Register;
 		Register(nameof(IntegratedWorkflowCreatesUsesAndRemovesEntrySideData), IntegratedWorkflowCreatesUsesAndRemovesEntrySideData!);
 	}

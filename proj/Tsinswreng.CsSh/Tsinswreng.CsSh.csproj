@@ -11,7 +11,7 @@
 
 		<!-- NuGet package identity and discovery metadata. -->
 		<PackageId>Tsinswreng.CsSh</PackageId>
-		<Version>0.1.0-alpha</Version>
+		<Version>0.2.0-alpha</Version>
 		<Authors>Tsinswreng</Authors>
 		<Description>A cross-platform, NativeAOT-compatible C# shell infrastructure library for build, release, synchronization, and toolchain scripts.</Description>
 		<PackageTags>shell;process;filesystem;script;csx;nativeaot;cross-platform</PackageTags>

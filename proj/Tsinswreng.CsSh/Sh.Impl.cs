@@ -59,7 +59,7 @@ public partial class Sh{
 	public partial Command Cmd(str Exe, IList<str> Args, CommandOptions Options, CT Ct) {
 		ArgumentException.ThrowIfNullOrWhiteSpace(Exe);
 		ArgumentNullException.ThrowIfNull(Args);
-		var Cwd = NormalizeFileSystemPath(Options.Cwd ?? CurrentDirectory);
+		var Cwd = (str)FullPath(Options.Cwd ?? CurrentDirectory);
 		return new(new(Exe, Args.ToArray(), Options, Cwd, SnapshotEnvironment(Options), Stdout, Stderr, Ct, true));
 	}
 
@@ -78,7 +78,7 @@ public partial class Sh{
 	public partial Command TryCmd(str Exe, IList<str> Args, CommandOptions Options, CT Ct) {
 		ArgumentException.ThrowIfNullOrWhiteSpace(Exe);
 		ArgumentNullException.ThrowIfNull(Args);
-		var Cwd = NormalizeFileSystemPath(Options.Cwd ?? CurrentDirectory);
+		var Cwd = (str)FullPath(Options.Cwd ?? CurrentDirectory);
 		return new(new(Exe, Args.ToArray(), Options, Cwd, SnapshotEnvironment(Options), Stdout, Stderr, Ct, false));
 	}
 
@@ -184,15 +184,7 @@ public partial class Sh{
 		return NIL;
 	}
 
-	internal static str NormalizePath(str Path) {
+	public static partial str NormalizePath(str Path) {
 		return Path.Replace('\\', '/');
-	}
-
-	internal str NormalizeFileSystemPath(Pth Path) {
-		str PathValue = Path;
-		var Candidate = PathValue.Replace('/', System.IO.Path.DirectorySeparatorChar);
-		if (!System.IO.Path.IsPathRooted(Candidate))
-			Candidate = System.IO.Path.Combine(CurrentDirectory, Candidate);
-		return Candidate;
 	}
 }

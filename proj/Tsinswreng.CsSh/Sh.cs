@@ -103,4 +103,7 @@ public partial class Sh{
 
 	/// 非同步合并多条 Source 流并写入同一 Target；Ct 必须作为最后一个位置参数传入。
 	public partial Task<nil> Write(Content Target, IReadOnlyList<Content> Sources, CT Ct);
+
+	/// 將 CsSh 路徑表示統一為正斜線，不進行絕對化或檔案系統存取。
+	public static partial str NormalizePath(str Path);
 }

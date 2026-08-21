@@ -11,6 +11,10 @@ public partial class TestCssh:ITester{
 		Node.IsParallelRecursive = false;
 		RegisterIntegratedWorkflow(Node);
 		RegisterExtnString(Node);
+		RegisterNormalizePath(Node);
+		RegisterBaseName(Node);
+		RegisterDirName(Node);
+		RegisterFullPath(Node);
 		RegisterMkdirAndRm(Node);
 		RegisterCpAndMv(Node);
 		RegisterLsAndFind(Node);
