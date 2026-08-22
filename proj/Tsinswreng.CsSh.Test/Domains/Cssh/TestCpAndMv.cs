@@ -19,6 +19,9 @@ public partial class TestCssh{
 	/// Verifies a source glob copies its matches as destination children rather than nesting the source directory.
 	public partial Task<object?> CpGlobCopiesSourceContents(object? O);
 
+	/// Verifies a trailing-slash glob copies only directories once.
+	public partial Task<object?> CpDirectoryGlobCopiesDirectories(object? O);
+
 	/// Verifies an existing directory destination receives the source file name.
 	public partial Task<object?> CpFileIntoExistingDirectory(object? O);
 

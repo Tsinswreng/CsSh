@@ -44,12 +44,12 @@ public partial class TestCssh{
 			LocalSh.Cd(IntegratedRoot);
 			T(LocalSh.FullPath("input/message.txt") == FullPath(SourceFile));
 
-			// Ls reports item type; Cp/Mv then produce the state for Glob to inspect.
-			var Entries = new Dictionary<str, FileSystemInfo>();
-			await foreach (var Entry in Ls(IntegratedRoot, Ct)) {
-				Entries.Add(Entry.Name, Entry);
+			// Ls yields complete paths directly; metadata remains an explicit FsInfo operation.
+			var Entries = new HashSet<Pth>();
+			foreach (var Entry in Ls(IntegratedRoot)) {
+				Entries.Add(Entry);
 			}
-			T(Entries["input"] is DirectoryInfo);
+			T(Entries.Contains(InputDir));
 			var CopiedFile = IntegratedRoot/"output"/"copy.txt";
 			var MovedFile = IntegratedRoot/"output"/"final.txt";
 			await Cp(SourceFile, CopiedFile, Ct);
@@ -60,8 +60,8 @@ public partial class TestCssh{
 				T(Text == "CsSh integration");
 			}
 			var TextFiles = new List<str>();
-			await foreach (var Entry in Glob(IntegratedRoot/"**/*.txt", Ct)) {
-				TextFiles.Add(Entry.Name);
+			foreach (var Entry in Glob(IntegratedRoot/"**/*.txt")) {
+				TextFiles.Add(BaseName(Entry));
 			}
 			T(TextFiles.Order().SequenceEqual(["final.txt", "message.txt"]));
 

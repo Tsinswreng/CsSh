@@ -56,11 +56,10 @@ public static partial class ShGlobal{
 	public static partial Pth BaseName(Pth Path){ return Sh.BaseName(Path); }
 	public static partial Pth DirName(Pth Path){ return Sh.DirName(Path); }
 	public static partial Pth FullPath(Pth Path){ return Sh.FullPath(Path); }
-	public static partial IEnumerable<FileSystemInfo> Glob(Pth Pattern){ return Sh.Glob(Pattern); }
-	public static partial IAsyncEnumerable<FileSystemInfo> Glob(Pth Pattern, CT Ct){ return Sh.Glob(Pattern, Ct); }
-	public static partial IEnumerable<FileSystemInfo> Ls(Pth? Path, LsOptions? Options){ return Sh.Ls(Path, Options); }
-	public static partial IAsyncEnumerable<FileSystemInfo> Ls(Pth? Path, CT Ct){ return Sh.Ls(Path, Ct); }
-	public static partial IAsyncEnumerable<FileSystemInfo> Ls(Pth? Path, LsOptions? Options, CT Ct){ return Sh.Ls(Path, Options, Ct); }
+	public static partial IEnumerable<Pth> Glob(Pth Pattern){ return Sh.Glob(Pattern); }
+	public static partial IEnumerable<Pth> Ls(Pth? Path, LsOptions? Options){ return Sh.Ls(Path, Options); }
+	public static partial IEnumerable<Pth> LsDir(Pth? Path, LsOptions? Options){ return Sh.LsDir(Path, Options); }
+	public static partial IEnumerable<Pth> LsFile(Pth? Path, LsOptions? Options){ return Sh.LsFile(Path, Options); }
 	public static partial Content Read(Pth Path){ return Sh.Read(Path); }
 	public static partial Task<Content> Read(Pth Path, CT Ct){ return Sh.Read(Path, Ct); }
 	public static partial void Write(Pth Path, Content Source){ Sh.Write(Path, Source); }

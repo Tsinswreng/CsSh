@@ -2,21 +2,15 @@ using Tsinswreng.CsTreeTest;
 
 namespace Tsinswreng.CsSh.Test.Domains.CsSh;
 
-/// Declares tests for listing and recursive glob lookup.
+/// Declares tests for the path-only Ls API.
 public partial class TestCssh{
-	/// Registers Ls and Find cases.
-	public partial void RegisterLsAndFind(ITestNode Node);
+	/// Registers Ls cases.
+	public partial void RegisterLs(ITestNode Node);
 
-	/// Verifies Ls reports file-system kinds.
-	public partial Task<object?> LsExposesFileAndDirectoryKinds(object? O);
+	/// Verifies Ls returns directly usable complete paths without FileSystemInfo metadata.
+	public partial Task<object?> LsReturnsCompletePaths(object? O);
 
-	/// Verifies Ls returns ordinary BCL metadata such as attributes and UTC timestamps.
-	public partial Task<object?> LsExposesBclFileAttributes(object? O);
-
-	/// Verifies recursive ** glob matching.
-	public partial Task<object?> FindMatchesRecursiveRelativeGlob(object? O);
-
-	/// Verifies concise asynchronous Ls overloads.
-	public partial Task<object?> AsyncLsNeedsNoNullOptions(object? O);
+	/// Verifies Ls passes the recursive option through to the BCL enumerator.
+	public partial Task<object?> LsRecurses(object? O);
 }
 

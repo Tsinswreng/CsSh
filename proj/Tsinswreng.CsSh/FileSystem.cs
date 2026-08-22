@@ -1,5 +1,3 @@
-using System.Text.RegularExpressions;
-
 namespace Tsinswreng.CsSh;
 
 /// Cp 的可选行为。
@@ -10,7 +8,8 @@ public sealed record CpOptions(
 public sealed record MvOptions(
 	bool Overwrite = false);
 
-/// Ls 的可选行为。
+/// Ls、LsDir 與 LsFile 的可选行为。
+/// Recursive 為 false 時只列出直接子項；為 true 時遞迴列出所有後代項目。
 public sealed record LsOptions(
 	bool Recursive = false);
 
@@ -89,24 +88,47 @@ public partial class Sh{
 	/// 不要求目標存在，且不解析符號連結；等價於 System.IO.Path.GetFullPath。
 	public partial Pth FullPath(Pth Path);
 
-/// 惰性查找匹配的文件系统项目；这是递归枚举加 glob 过滤，不是 Bash find 条件表达式。
-	/// Pattern 是跨平台 glob 路径，支持 /、*、? 与 **；例如 Glob("src/**/*.csproj")。
-	/// 返回 .NET 的 FileSystemInfo；文件为 FileInfo、目录为 DirectoryInfo。
-/// 可直接读取 Attributes、LastWriteTimeUtc 等 BCL 属性；文件大小使用 FileInfo.Length。
-public partial IEnumerable<FileSystemInfo> Glob(Pth Pattern);
+	/// 惰性查找匹配的文件系统路径；相对 Pattern 按当前 Sh 的工作目录解析。
+	/// 语法与匹配语义由 Meziantou.Framework.Globbing 的 Standard dialect 定义，支持 *、?、[]、{} 与 **。
+	/// 不以 / 结尾的模式只匹配文件；以 / 结尾的模式只匹配目录，且字面量目录如 Glob("src/assets/") 会返回该目录本身。
+	/// 返回完整 Pth，不建立 FileSystemInfo；需要类型或 metadata 时，显式调用 IsFile、IsDir 或 FsInfo。
+	/// 列举在 foreach 时才访问文件系统，所以目录不存在、权限不足等错误也会在 foreach 时抛出。
+	/// <example>
+	/// foreach (var FilePath in Glob("src/**/*.cs")) {
+	/// 	Console.WriteLine(FilePath);
+	/// }
+	/// foreach (var DirectoryPath in Glob("src/*/")) {
+	/// 	Console.WriteLine(DirectoryPath);
+	/// }
+	/// </example>
+	public partial IEnumerable<Pth> Glob(Pth Pattern);
 
-	/// 异步查找匹配的文件系统项目；Ct 必须作为最后一个位置参数传入。
-public partial IAsyncEnumerable<FileSystemInfo> Glob(Pth Pattern, CT Ct);
+	/// 惰性列出 Path 的文件和子目录路径，等价于 Bash 的 ls；Path 为 null 时列出当前 Sh 的工作目录。
+	/// 直接转发 Directory.EnumerateFileSystemEntries，因此只产生路径，不读取大小、时间等 metadata。
+	/// <example>
+	/// foreach (var EntryPath in Ls("artifacts")) {
+	/// 	Console.WriteLine(EntryPath);
+	/// }
+	/// </example>
+	public partial IEnumerable<Pth> Ls(Pth? Path = null, LsOptions? Options = null);
 
-	/// 惰性列出目录中的子项，等价于 Bash 的 ls。
-	/// 返回 .NET 的 FileSystemInfo；Path 为 null 时列出当前目录；Recursive 为 false 时仅列出直接子项。
-	public partial IEnumerable<FileSystemInfo> Ls(Pth? Path = null, LsOptions? Options = null);
+	/// 惰性列出 Path 的子目录路径；Path 为 null 时列出当前 Sh 的工作目录。
+	/// 直接转发 Directory.EnumerateDirectories；使用 new LsOptions(Recursive: true) 可递迴列出所有子目录。
+	/// <example>
+	/// foreach (var DirectoryPath in LsDir("src", new LsOptions(Recursive: true))) {
+	/// 	Console.WriteLine(DirectoryPath);
+	/// }
+	/// </example>
+	public partial IEnumerable<Pth> LsDir(Pth? Path = null, LsOptions? Options = null);
 
-	/// 异步列出目录中的子项；Ct 必须作为最后一个位置参数传入。
-	public partial IAsyncEnumerable<FileSystemInfo> Ls(Pth? Path, CT Ct);
-
-	/// 异步列出目录中的子项；需要递归列出时传入 Options；Ct 必须作为最后一个位置参数传入。
-	public partial IAsyncEnumerable<FileSystemInfo> Ls(Pth? Path, LsOptions? Options, CT Ct);
+	/// 惰性列出 Path 的文件路径；Path 为 null 时列出当前 Sh 的工作目录。
+	/// 直接转发 Directory.EnumerateFiles；使用 new LsOptions(Recursive: true) 可遞迴列出所有檔案。
+	/// <example>
+	/// foreach (var FilePath in LsFile("src")) {
+	/// 	Console.WriteLine(FilePath);
+	/// }
+	/// </example>
+	public partial IEnumerable<Pth> LsFile(Pth? Path = null, LsOptions? Options = null);
 
 	/// 讀取檔案為 Content；呼叫方可將結果隱式視為 string 或普通 Stream。
 	public partial Content Read(Pth Path);
@@ -156,17 +178,15 @@ public partial IAsyncEnumerable<FileSystemInfo> Glob(Pth Pattern, CT Ct);
 	/// 判斷路徑是否含有 Cssh 支援的 glob 萬用字元。
 	private partial bool HasGlob(str Path);
 
-	/// 取得 glob 中第一個萬用字元之前、可直接枚舉的目錄根。
-	private partial str GlobRoot(str Pattern);
+	/// 取得傳給第三方 Glob 的搜尋根目錄，使相對模式不會以 .. 開頭。
+	/// IsDirectoryPattern 保留原始輸入的尾隨分隔符語義，因為 Path.GetRelativePath 會將其移除。
+	private partial str GetGlobSearchRoot(str FullPattern, bool IsDirectoryPattern);
 
 	/// 按目的地是否為目錄，解析來源項目的最終目的路徑。
 	private partial str ResolveDestinationPath(str SourcePath, str DestinationPath);
 
-	/// 將 Cssh glob 轉換為完整路徑匹配使用的正規表示式。
-	private partial Regex GlobToRegex(str Pattern);
-
-	/// 將檔案系統路徑轉成 Cssh 對外統一使用正斜線的路徑表示。
-	private partial str ToShellPath(str FileSystemPath);
+	/// 建立所有 Ls 系列共用的 BCL 列舉選項，保留可列舉的隱藏和系統項目。
+	private partial EnumerationOptions MkLsEnumerationOptions(LsOptions? Options);
 
 	/// 在建立檔案前確保其父目錄存在。
 	private partial void EnsureParentDirectory(str FileSystemPath);

@@ -196,15 +196,37 @@ await Mv("source-dir", "output", Ct);  // output/source-dir/...
 await Cp("source.txt", "output", new CpOptions(Overwrite: true), Ct);
 ```
 
-`Glob` 是「遞歸枚舉 + glob 過濾」API，不是 Bash `find` 條件表達式。支持 `*`、`?` 和 `**`：
+`Glob` 直接使用 Meziantou.Framework.Globbing 的 Standard dialect，惰性返回完整 `Pth` 路徑，不建立 `FileSystemInfo`。相對模式按目前 `Sh` 的工作目錄解析；支持 `*`、`?`、`[]`、`{}` 和 `**`。不以 `/` 結尾的模式只匹配檔案，以 `/` 結尾的模式只匹配目錄；字面量目錄模式也會回傳該目錄本身：
 
 ```cs
-await foreach (var Entry in Glob("src/**/*.csproj", Ct)) {
-	Console.WriteLine(Entry.FullName);
+foreach (var Entry in Glob("src/**/*.csproj")) {
+	Console.WriteLine(Entry);
+}
+
+foreach (var Directory in Glob("src/*/")) {
+	Console.WriteLine(Directory);
+}
+
+foreach (var Assets in Glob("src/assets/")) {
+	Console.WriteLine(Assets); // src/assets
 }
 ```
 
-返回值是 .NET `FileSystemInfo`；文件可轉為 `FileInfo`，目錄可轉為 `DirectoryInfo`，屬性、時間和大小直接使用 BCL 成員。
+`Ls` 以相同的 `IEnumerable<Pth>` 方式列出檔案與目錄；`LsDir` 和 `LsFile` 分別只列出目錄或檔案。三者直接轉發 .NET `Directory.Enumerate*`，不預先讀取大小、時間等 metadata。`LsOptions.Recursive` 控制是否遞迴：
+
+```cs
+foreach (var Entry in Ls("artifacts")) {
+	Console.WriteLine(Entry);
+}
+
+foreach (var Directory in LsDir("src", new LsOptions(Recursive: true))) {
+	Console.WriteLine(Directory);
+}
+
+foreach (var File in LsFile("src")) {
+	Console.WriteLine(File);
+}
+```
 
 單一路徑的類型與屬性查詢使用 `FsInfo`；不存在時返回 `null`：
 
@@ -267,7 +289,7 @@ Write("message.txt", "hello");
 Exe("dotnet", ["--version"]);
 ```
 
-異步 API 支持取消。文件枚舉與命令流應優先使用異步入口；`IAsyncEnumerable` 和 `Stream` 都按惰性、流式方式消費。
+異步 API 支持取消。命令流以 `Stream` 惰性、流式方式消費；`Glob`、`Ls`、`LsDir` 與 `LsFile` 則是底層 .NET／Glob 函式庫提供的同步 `IEnumerable<Pth>` 列舉，沒有假的非同步包裝。
 
 ## 測試與開發
 

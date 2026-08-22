@@ -7,26 +7,21 @@ CT Ct = default;
 
 var Root = CsxDir();
 var CsProjDir = Root/"proj"/"Tsinswreng.CsSh";
-var SrcFiles = Glob(CsProjDir/"*", Ct);
-//FileSystemInfo
-var Decls = SrcFiles
-.Where(
-	x=>x is FileInfo f
-	&& f.FullName.EndsWith("cs")
-	&& !f.FullName.EndsWith(".Impl.cs")
-);
 
 var TargetFile = Root/"Api.txt";
 await Write(TargetFile, "", Ct);
-await foreach(var decl in Decls){
-	var content = await Read(decl.FullName, Ct);
-	var toWrite = await content.Text(Ct);
-	{
-		var a = toWrite;
-		a = a.Replace("public static partial ", "static ");
-		a = a.Replace("public partial ", "");
-		toWrite = a;
+foreach(var Decl in Glob(CsProjDir/"*.cs")){
+	// Glob now returns Pth directly, so no FileInfo projection is needed before reading.
+	if (((string)Decl).EndsWith(".Impl.cs", StringComparison.Ordinal)) {
+		continue;
 	}
-	await Append(TargetFile, toWrite, Ct);
+	var Content = await Read(Decl, Ct);
+	var ToWrite = await Content.Text(Ct);
+	{
+		var Rewritten = ToWrite;
+		Rewritten = Rewritten.Replace("public static partial ", "static ");
+		Rewritten = Rewritten.Replace("public partial ", "");
+		ToWrite = Rewritten;
+	}
+	await Append(TargetFile, ToWrite, Ct);
 }
-

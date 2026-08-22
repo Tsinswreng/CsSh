@@ -30,8 +30,8 @@ Cd(ProjectDir);
 // 生成一份可分發副本，再刪除符號檔。
 await Rm(PublishNoPdbDir, Ct);
 await Cp(PublishDir / "*", PublishNoPdbDir, Ct);
-await foreach (var Pdb in Glob(PublishNoPdbDir / "**/*.pdb", Ct))
-	await Rm(Pdb.FullName, Ct);
+foreach (var Pdb in Glob(PublishNoPdbDir / "**/*.pdb"))
+	await Rm(Pdb, Ct);
 
 // 壓縮檔暫存在來源目錄外，以免 tar 在掃描來源時把自身打進去。
 var ArchivePath = ProjectDir / "bin/Release/net10.0/win-x64/Ngan.Dict.Windows.tar.gz";

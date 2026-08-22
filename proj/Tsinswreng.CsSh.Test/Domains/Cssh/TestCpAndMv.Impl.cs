@@ -11,6 +11,7 @@ public partial class TestCssh{
 		Register(nameof(MvCreatesDestinationParent), MvCreatesDestinationParent!);
 		Register(nameof(AsyncCpAndMvNeedNoNullOptions), AsyncCpAndMvNeedNoNullOptions!);
 		Register(nameof(CpGlobCopiesSourceContents), CpGlobCopiesSourceContents!);
+		Register(nameof(CpDirectoryGlobCopiesDirectories), CpDirectoryGlobCopiesDirectories!);
 		Register(nameof(CpFileIntoExistingDirectory), CpFileIntoExistingDirectory!);
 		Register(nameof(MvDirectoryIntoExistingDirectory), MvDirectoryIntoExistingDirectory!);
 	}
@@ -83,6 +84,25 @@ public partial class TestCssh{
 			Assert.IsTrue(await ShGlobal.Exists(Root + "/destination/folder/empty", Ct));
 			Assert.IsTrue(await ShGlobal.Exists(Root + "/destination/folder/kept.txt", Ct));
 			Assert.IsTrue(!await ShGlobal.Exists(Root + "/destination/source", Ct));
+		}
+		finally {
+			TestSupport.Clean(Root);
+		}
+		return null;
+	}
+
+	/// A trailing slash keeps the third-party directory-only glob mode when copying.
+	public async partial Task<object?> CpDirectoryGlobCopiesDirectories(object? O) {
+		var Root = TestSupport.NewRoot();
+		using var CtSource = new CancellationTokenSource();
+		var Ct = CtSource.Token;
+		try {
+			await ShGlobal.Mkdir(Root + "/source/folder", Ct);
+			await ShGlobal.Write(Root + "/source/file.txt", "file", Ct);
+			await ShGlobal.Cp(Root + "/source/*/", Root + "/destination", Ct);
+
+			Assert.IsTrue(await ShGlobal.Exists(Root + "/destination/folder", Ct));
+			Assert.IsTrue(!await ShGlobal.Exists(Root + "/destination/file.txt", Ct));
 		}
 		finally {
 			TestSupport.Clean(Root);

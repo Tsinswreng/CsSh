@@ -32,4 +32,9 @@
 		<ContinuousIntegrationBuild Condition="'$(GITHUB_ACTIONS)' == 'true'">true</ContinuousIntegrationBuild>
 	</PropertyGroup>
 
+	<ItemGroup>
+		<!-- Parses and enumerates glob patterns without translating them to regular expressions. -->
+		<PackageReference Include="Meziantou.Framework.Globbing" Version="5.0.0" />
+	</ItemGroup>
+
 </Project>

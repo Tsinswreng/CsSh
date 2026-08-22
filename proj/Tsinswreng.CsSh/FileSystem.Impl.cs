@@ -1,6 +1,5 @@
-using System.Runtime.CompilerServices;
-using System.Text;
-using System.Text.RegularExpressions;
+using Meziantou.Framework.Globbing;
+using GlobPattern = Meziantou.Framework.Globbing.Glob;
 
 namespace Tsinswreng.CsSh;
 
@@ -180,49 +179,54 @@ public partial class Sh{
 		return NIL;
 	}
 
-	public partial IEnumerable<FileSystemInfo> Glob(Pth Pattern) {
-		var Regex = GlobToRegex(FullPath(Pattern));
-		var Root = GlobRoot(Pattern);
-		if (!Directory.Exists(Root))
-			return [];
-		return new DirectoryInfo(Root).EnumerateFileSystemInfos("*", SearchOption.AllDirectories)
-			.Where(Entry => Regex.IsMatch(ToShellPath(Entry.FullName)));
+	public partial IEnumerable<Pth> Glob(Pth Pattern) {
+		// Preserve the caller's type selector before BCL path operations erase or reinterpret it.
+		var IsDirectoryPattern = ((str)Pattern).EndsWith('/') || ((str)Pattern).EndsWith('\\');
+		// Expand from this Sh instance's CWD, then select a static ancestor that the library can enumerate.
+		var FullPattern = (str)FullPath(Pattern);
+		var Root = GetGlobSearchRoot(FullPattern, IsDirectoryPattern);
+		var RelativePattern = NormalizePath(System.IO.Path.GetRelativePath(Root, FullPattern));
+		if (IsDirectoryPattern) {
+			// Path.GetRelativePath removes a trailing separator from ordinary directories, but the
+			// Standard dialect uses that separator to select directory matches.
+			RelativePattern += "/";
+		}
+		// The glob library owns matching and recursion pruning. Cssh only adapts the Cssh
+		// absolute pattern to the library's root-relative input, then wraps output as Pth.
+		var PatternOptions = OperatingSystem.IsWindows() ? GlobOptions.IgnoreCase : GlobOptions.None;
+		var ParsedPattern = GlobPattern.Parse(RelativePattern, GlobDialect.Standard, PatternOptions);
+		var Options = new EnumerationOptions {
+			RecurseSubdirectories = true,
+			AttributesToSkip = FileAttributes.None,
+			ReturnSpecialDirectories = false,
+		};
+		return ParsedPattern
+			.EnumerateFileSystemEntries(Root, Options)
+			.Select(Entry => new Pth(NormalizePath(Entry)));
 	}
 
-	public async partial IAsyncEnumerable<FileSystemInfo> Glob(Pth Pattern, [EnumeratorCancellation] CT Ct) {
-		var Regex = GlobToRegex(FullPath(Pattern));
-		var Root = GlobRoot(Pattern);
-		if (!Directory.Exists(Root)){
-			yield break;
-		}
-		var Entrys = new DirectoryInfo(Root).EnumerateFileSystemInfos("*", SearchOption.AllDirectories);
-		foreach (var Entry in Entrys) {
-			Ct.ThrowIfCancellationRequested();
-			if (Regex.IsMatch(ToShellPath(Entry.FullName))){
-				yield return Entry;
-			}
-			await Task.Yield();
-		}
-	}
-
-	public partial IEnumerable<FileSystemInfo> Ls(Pth? Path, LsOptions? Options) {
+	public partial IEnumerable<Pth> Ls(Pth? Path, LsOptions? Options) {
+		// Keep Directory's lazy enumeration; Select only changes each yielded string into Cssh's path type.
 		var Root = (str)FullPath(Path ?? new("."));
-		var Option = Options?.Recursive == true ? SearchOption.AllDirectories : SearchOption.TopDirectoryOnly;
-		return new DirectoryInfo(Root).EnumerateFileSystemInfos("*", Option);
+		return Directory
+			.EnumerateFileSystemEntries(Root, "*", MkLsEnumerationOptions(Options))
+			.Select(Entry => new Pth(NormalizePath(Entry)));
 	}
 
-	public partial IAsyncEnumerable<FileSystemInfo> Ls(Pth? Path, CT Ct) {
-		return Ls(Path, null, Ct);
-	}
-
-	public async partial IAsyncEnumerable<FileSystemInfo> Ls(Pth? Path, LsOptions? Options, [EnumeratorCancellation] CT Ct) {
+	public partial IEnumerable<Pth> LsDir(Pth? Path, LsOptions? Options) {
+		// Use the BCL's directory-specific enumerator so callers do not need a second IsDir lookup.
 		var Root = (str)FullPath(Path ?? new("."));
-		var Option = Options?.Recursive == true ? SearchOption.AllDirectories : SearchOption.TopDirectoryOnly;
-		foreach (var Entry in new DirectoryInfo(Root).EnumerateFileSystemInfos("*", Option)) {
-			Ct.ThrowIfCancellationRequested();
-			yield return Entry;
-			await Task.Yield();
-		}
+		return Directory
+			.EnumerateDirectories(Root, "*", MkLsEnumerationOptions(Options))
+			.Select(Entry => new Pth(NormalizePath(Entry)));
+	}
+
+	public partial IEnumerable<Pth> LsFile(Pth? Path, LsOptions? Options) {
+		// Use the BCL's file-specific enumerator so callers do not need a second IsFile lookup.
+		var Root = (str)FullPath(Path ?? new("."));
+		return Directory
+			.EnumerateFiles(Root, "*", MkLsEnumerationOptions(Options))
+			.Select(Entry => new Pth(NormalizePath(Entry)));
 	}
 
 	public partial Content Read(Pth Path) {
@@ -309,17 +313,25 @@ public partial class Sh{
 		var DestinationPath = (str)FullPath(Destination);
 		Directory.CreateDirectory(DestinationPath);
 		var FoundAny = false;
-		await foreach (var Entry in Glob(Source, Ct)) {
-			FoundAny = true;
-			var Target = Destination / Entry.Name;
-			if (Entry is DirectoryInfo) {
-				// Bash's cp -r source/* destination merges a matching directory in destination.
-				// It must not reject a second resource tree that extends the same folder.
-				await CopyDirectoryMerge(Entry.FullName, Target, Ct).ConfigureAwait(false);
+		var IsDirectoryPattern = Source.EndsWith('/') || Source.EndsWith('\\');
+		// A trailing slash already selects the library's directory mode. Do not append one
+		// again, or every directory would be copied twice.
+		if (IsDirectoryPattern) {
+			foreach (var Entry in Glob(Source)) {
+				FoundAny = true;
+				await CopyDirectoryMerge(FullPath(Entry), FullPath(Destination / BaseName(Entry)), Ct).ConfigureAwait(false);
 			}
-			else {
-				// A matched file is the direct source child: Bash replaces an existing counterpart.
-			await CopyFile(Entry.FullName, FullPath(Target), Overwrite, Ct).ConfigureAwait(false);
+		}
+		else {
+			// The un-suffixed library pattern yields files. Bash's source/* additionally
+			// includes directories, which the trailing-slash library pattern yields lazily.
+			foreach (var Entry in Glob(Source)) {
+				FoundAny = true;
+				await CopyFile(FullPath(Entry), FullPath(Destination / BaseName(Entry)), Overwrite, Ct).ConfigureAwait(false);
+			}
+			foreach (var Entry in Glob(new Pth(Source + "/"))) {
+				FoundAny = true;
+				await CopyDirectoryMerge(FullPath(Entry), FullPath(Destination / BaseName(Entry)), Ct).ConfigureAwait(false);
 			}
 		}
 		if (!FoundAny)
@@ -340,22 +352,28 @@ public partial class Sh{
 		}
 	}
 
-	/// Glob detection is deliberately limited to the same wildcard characters supported by Find.
+	/// Recognises every non-literal syntax prefix supported by the glob parser.
 	private partial bool HasGlob(str Path) {
-		return Path.IndexOfAny(['*', '?']) >= 0;
+		return Path.IndexOfAny(['*', '?', '[', '{']) >= 0;
 	}
 
-	private partial str GlobRoot(str Pattern) {
-		var NormalizedPattern = NormalizePath(Pattern);
-		var MagicIndex = NormalizedPattern.IndexOfAny(['*', '?']);
+	private partial str GetGlobSearchRoot(str FullPattern, bool IsDirectoryPattern) {
+		// This scan is only for choosing an enumeration root; parsing and matching remain library-owned.
+		var MagicIndex = FullPattern.IndexOfAny(['*', '?', '[', '{']);
 		if (MagicIndex < 0) {
-			var Parent = System.IO.Path.GetDirectoryName(FullPath(NormalizedPattern));
-			return string.IsNullOrEmpty(Parent) ? FullPath(".") : Parent;
+			// Trim here because GetDirectoryName("folder/") denotes folder itself on Windows,
+			// while a literal directory pattern must start enumerating at folder's parent.
+			var LiteralPath = IsDirectoryPattern
+				? System.IO.Path.TrimEndingDirectorySeparator(FullPattern)
+				: FullPattern;
+			// A literal directory pattern must be relative to its parent so the relative
+			// pattern can retain the final slash that selects directory mode.
+			return NormalizePath(System.IO.Path.GetDirectoryName(LiteralPath) ?? (IsDirectoryPattern ? LiteralPath : CurrentDirectory));
 		}
-		var Prefix = NormalizedPattern[..MagicIndex];
-		var Separator = Prefix.LastIndexOf('/');
-		var Root = Separator < 0 ? "." : Prefix[..Separator];
-		return FullPath(string.IsNullOrEmpty(Root) ? "." : Root);
+		// Meziantou rejects patterns that begin with "..". Enumerating from the static parent
+		// keeps the library pattern relative without reimplementing glob parsing.
+		var StaticPrefix = FullPattern[..MagicIndex];
+		return NormalizePath(System.IO.Path.GetDirectoryName(StaticPrefix) ?? System.IO.Path.GetPathRoot(FullPattern)!);
 	}
 
 	private partial str ResolveDestinationPath(str SourcePath, str DestinationPath) {
@@ -365,36 +383,13 @@ public partial class Sh{
 		return System.IO.Path.Combine(DestinationPath, SourceName);
 	}
 
-	private partial Regex GlobToRegex(str Pattern) {
-		var Builder = new StringBuilder("^");
-		for (var Index = 0; Index < Pattern.Length; Index++) {
-			var Character = Pattern[Index];
-			if (Character == '*' && Index + 1 < Pattern.Length && Pattern[Index + 1] == '*') {
-				Index++;
-				if (Index + 1 < Pattern.Length && Pattern[Index + 1] == '/') {
-					Index++;
-					Builder.Append("(?:.*/)?");
-				}
-				else {
-					Builder.Append(".*");
-				}
-			}
-			else if (Character == '*') {
-				Builder.Append("[^/]*");
-			}
-			else if (Character == '?') {
-				Builder.Append("[^/]");
-			}
-			else {
-				Builder.Append(Regex.Escape(Character.ToString()));
-			}
-		}
-		Builder.Append('$');
-		return new(Builder.ToString(), OperatingSystem.IsWindows() ? RegexOptions.IgnoreCase : RegexOptions.None);
-	}
-
-	private partial str ToShellPath(str FileSystemPath) {
-		return NormalizePath(System.IO.Path.GetFullPath(FileSystemPath));
+	private partial EnumerationOptions MkLsEnumerationOptions(LsOptions? Options) {
+		return new() {
+			RecurseSubdirectories = Options?.Recursive == true,
+			// Shell listing should not silently omit entries merely because they are hidden.
+			AttributesToSkip = FileAttributes.None,
+			ReturnSpecialDirectories = false,
+		};
 	}
 
 	private partial void EnsureParentDirectory(str FileSystemPath) {

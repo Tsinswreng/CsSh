@@ -65,8 +65,8 @@ var ProjectRoots = new[]{
 };
 
 foreach (var ProjectRoot in ProjectRoots) {
-	await foreach (var Project in Glob(Root / ProjectRoot / "**/*.csproj", Ct)) {
-		await Exe("dotnet", ["sln", "add", Project.FullName], Ct);
+	foreach (var Project in Glob(Root / ProjectRoot / "**/*.csproj")) {
+		await Exe("dotnet", ["sln", "add", Project], Ct);
 	}
 }
 

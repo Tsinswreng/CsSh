@@ -56,16 +56,17 @@ else {
 	await Echo("[sync-all] pulling and syncing all skills in " + SkillsRepoDir, Ct);
 	var FoundAny = false;
 
-	await foreach (var Repo in Ls(SkillsRepoDir, Ct)) {
-		if (Repo is not DirectoryInfo || !Repo.Name.StartsWith("tsinswreng-") || !await Exists(Repo.FullName / ".git", Ct))
+	foreach (var Repo in LsDir(SkillsRepoDir)) {
+		var RepoName = BaseName(Repo);
+		if (!RepoName.StartsWith("tsinswreng-") || !await IsDir(Repo / ".git", Ct))
 			continue;
 
-		await Echo("[pull] " + Repo.Name, Ct);
-		var PullSucceeded = (await TryExe("git", ["-C", Repo.FullName, "pull"], Ct)).IsSuccess;
+		await Echo("[pull] " + RepoName, Ct);
+		var PullSucceeded = (await TryExe("git", ["-C", Repo, "pull"], Ct)).IsSuccess;
 		if (!PullSucceeded)
-			await Echo("[warn] pull failed for " + Repo.Name + ", continuing...", Ct);
+			await Echo("[warn] pull failed for " + RepoName + ", continuing...", Ct);
 
-		await SyncSkillContent(Repo.FullName, Repo.Name);
+		await SyncSkillContent(Repo, RepoName);
 		FoundAny = true;
 	}
 

@@ -37,9 +37,9 @@ await Cp("input/message.txt", "input/copy.txt", Ct);
 await Mv("input/copy.txt", "input/moved.txt", Ct);
 await Rm("input/moved.txt", Ct);
 
-// Ls 直接回傳 .NET FileSystemInfo；以 FileInfo/DirectoryInfo 型別與 Attributes 判斷項目性質。
-await foreach (var Item in Ls("input", Ct))
-	await Echo($"ls: {Item.Name}; file={Item is FileInfo}; dir={Item is DirectoryInfo}; link={Item.Attributes.HasFlag(FileAttributes.ReparsePoint)}; modified={Item.LastWriteTimeUtc:O}", Ct);
+// Ls 直接回傳完整 Pth；需要種類時明確呼叫 IsFile、IsDir，不配置 FileSystemInfo。
+foreach (var Item in Ls("input"))
+	await Echo($"ls: {Item}; file={await IsFile(Item, Ct)}; dir={await IsDir(Item, Ct)}", Ct);
 
 // FsInfo 回傳 BCL 的 FileInfo 或 DirectoryInfo；IsFile 與 IsDir 則對應 Bash 的 -f、-d 常用判斷。
 var MessageInfo = await FsInfo("input/message.txt", Ct);
@@ -51,9 +51,9 @@ var MessagePath = (Pth)"input/message.txt";
 await Echo("base=" + BaseName(MessagePath) + "; dir=" + DirName(MessagePath), Ct);
 await Echo("absolute=" + RealPath(MessagePath), Ct);
 
-// Glob 接收 Bash 風格的 glob 路徑，並以 IAsyncEnumerable 惰性輸出結果。
-await foreach (var Item in Glob("input/**/*.txt", Ct))
-	await Echo("find: " + Item.FullName.Replace('\\', '/'), Ct);
+// Glob 接收第三方庫支援的 glob 路徑，並以 IEnumerable 惰性輸出結果。
+foreach (var Item in Glob("input/**/*.txt"))
+	await Echo("find: " + Item, Ct);
 
 // Exe 是一般命令入口：立即執行並把兩條輸出流寫回終端。
 await Exe("dotnet", ["--version"], Ct);

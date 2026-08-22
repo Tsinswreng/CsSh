@@ -53,11 +53,18 @@ public static partial class ShGlobal{
 	public static partial Pth BaseName(Pth Path);
 	public static partial Pth DirName(Pth Path);
 	public static partial Pth FullPath(Pth Path);
-	public static partial IEnumerable<FileSystemInfo> Glob(Pth Pattern);
-	public static partial IAsyncEnumerable<FileSystemInfo> Glob(Pth Pattern, CT Ct);
-	public static partial IEnumerable<FileSystemInfo> Ls(Pth? Path = null, LsOptions? Options = null);
-	public static partial IAsyncEnumerable<FileSystemInfo> Ls(Pth? Path, CT Ct);
-	public static partial IAsyncEnumerable<FileSystemInfo> Ls(Pth? Path, LsOptions? Options, CT Ct);
+	/// 在預設 Sh 的目前工作目錄下惰性列舉 Glob 模式；不以 / 結尾匹配檔案，以 / 結尾匹配目錄。
+	/// 例如 foreach (var FilePath in Glob("src/**/*.cs")) { Console.WriteLine(FilePath); }。
+	public static partial IEnumerable<Pth> Glob(Pth Pattern);
+	/// 在預設 Sh 的目前工作目錄下惰性列舉檔案與目錄路徑；Path 為 null 時列舉目前工作目錄。
+	/// 例如 foreach (var EntryPath in Ls("artifacts")) { Console.WriteLine(EntryPath); }。
+	public static partial IEnumerable<Pth> Ls(Pth? Path = null, LsOptions? Options = null);
+	/// 在預設 Sh 的目前工作目錄下惰性列舉目錄路徑；傳入 new LsOptions(Recursive: true) 可遞迴。
+	/// 例如 foreach (var DirectoryPath in LsDir("src")) { Console.WriteLine(DirectoryPath); }。
+	public static partial IEnumerable<Pth> LsDir(Pth? Path = null, LsOptions? Options = null);
+	/// 在預設 Sh 的目前工作目錄下惰性列舉檔案路徑；傳入 new LsOptions(Recursive: true) 可遞迴。
+	/// 例如 foreach (var FilePath in LsFile("src")) { Console.WriteLine(FilePath); }。
+	public static partial IEnumerable<Pth> LsFile(Pth? Path = null, LsOptions? Options = null);
 	public static partial Content Read(Pth Path);
 	public static partial Task<Content> Read(Pth Path, CT Ct);
 	public static partial void Write(Pth Path, Content Source);
