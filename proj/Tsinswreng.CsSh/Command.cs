@@ -75,6 +75,9 @@ public sealed partial class Command:IDisposable,IAsyncDisposable{
 	/// 將可選標準輸入來源複製至已啟動進程。
 	private partial Task CopyInput(Process Process);
 
+	/// 確保標準輸入在正常完成或失敗時都被關閉，讓子進程能觀察到 EOF。
+	private partial Task CloseInput(Process Process);
+
 	/// 將一條 Content 資料流複製至目標。
 	private static partial Task Write(Content Target, Content Source, CT Ct);
 
@@ -86,6 +89,9 @@ public sealed partial class Command:IDisposable,IAsyncDisposable{
 
 	/// 終止仍在執行中的子進程。
 	private partial void TryKill();
+
+	/// 釋放已建立的 Process 控制代碼；輸出管線完成後才可呼叫。
+	private partial void DisposeProcess();
 }
 
 /// 建立 Command 時的可選配置。

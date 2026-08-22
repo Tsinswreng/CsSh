@@ -46,10 +46,10 @@ var MessageInfo = await FsInfo("input/message.txt", Ct);
 await Echo("info: file=" + (MessageInfo is FileInfo) + "; dir=" + (MessageInfo is DirectoryInfo), Ct);
 await Echo("is file=" + await IsFile("input/message.txt", Ct) + "; is dir=" + await IsDir("input", Ct), Ct);
 
-// BaseName、DirName、RealPath 都依目前 Shell 的 Cwd 工作；Pth 可直接和 string 隱式互轉。
+// BaseName、DirName、FullPath 都依目前 Shell 的 Cwd 工作；Pth 可直接和 string 隱式互轉。
 var MessagePath = (Pth)"input/message.txt";
 await Echo("base=" + BaseName(MessagePath) + "; dir=" + DirName(MessagePath), Ct);
-await Echo("absolute=" + RealPath(MessagePath), Ct);
+await Echo("absolute=" + FullPath(MessagePath), Ct);
 
 // Glob 接收第三方庫支援的 glob 路徑，並以 IEnumerable 惰性輸出結果。
 foreach (var Item in Glob("input/**/*.txt"))

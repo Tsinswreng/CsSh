@@ -286,24 +286,18 @@ class Sh{
 	/// 不要求目標存在，且不解析符號連結；等價於 System.IO.Path.GetFullPath。
 	Pth FullPath(Pth Path);
 
-/// 惰性查找匹配的文件系统项目；这是递归枚举加 glob 过滤，不是 Bash find 条件表达式。
-	/// Pattern 是跨平台 glob 路径，支持 /、*、? 与 **；例如 Glob("src/**/*.csproj")。
-	/// 返回 .NET 的 FileSystemInfo；文件为 FileInfo、目录为 DirectoryInfo。
-/// 可直接读取 Attributes、LastWriteTimeUtc 等 BCL 属性；文件大小使用 FileInfo.Length。
-IEnumerable<FileSystemInfo> Glob(Pth Pattern);
+	/// 惰性查找匹配的文件系统路径；不以 / 结尾匹配文件，以 / 结尾匹配目录。
+	/// 返回完整 Pth；只有枚举时才访问文件系统。
+	IEnumerable<Pth> Glob(Pth Pattern);
 
-	/// 异步查找匹配的文件系统项目；Ct 必须作为最后一个位置参数传入。
-IAsyncEnumerable<FileSystemInfo> Glob(Pth Pattern, CT Ct);
+	/// 惰性列出目录中的文件和子目录路径；Path 为 null 时列出当前目录。
+	IEnumerable<Pth> Ls(Pth? Path = null, LsOptions? Options = null);
 
-	/// 惰性列出目录中的子项，等价于 Bash 的 ls。
-	/// 返回 .NET 的 FileSystemInfo；Path 为 null 时列出当前目录；Recursive 为 false 时仅列出直接子项。
-	IEnumerable<FileSystemInfo> Ls(Pth? Path = null, LsOptions? Options = null);
+	/// 惰性列出目录路径；Recursive 为 true 时递归列出后代目录。
+	IEnumerable<Pth> LsDir(Pth? Path = null, LsOptions? Options = null);
 
-	/// 异步列出目录中的子项；Ct 必须作为最后一个位置参数传入。
-	IAsyncEnumerable<FileSystemInfo> Ls(Pth? Path, CT Ct);
-
-	/// 异步列出目录中的子项；需要递归列出时传入 Options；Ct 必须作为最后一个位置参数传入。
-	IAsyncEnumerable<FileSystemInfo> Ls(Pth? Path, LsOptions? Options, CT Ct);
+	/// 惰性列出文件路径；Recursive 为 true 时递归列出后代文件。
+	IEnumerable<Pth> LsFile(Pth? Path = null, LsOptions? Options = null);
 
 	/// 讀取檔案為 Content；呼叫方可將結果隱式視為 string 或普通 Stream。
 	Content Read(Pth Path);
@@ -539,12 +533,11 @@ static class ShGlobal{
 	static Task<nil> Mv(Pth Source, Pth Destination, MvOptions? Options, CT Ct);
 	static Pth BaseName(Pth Path);
 	static Pth DirName(Pth Path);
-	static Pth RealPath(Pth Path);
-	static IEnumerable<FileSystemInfo> Glob(Pth Pattern);
-	static IAsyncEnumerable<FileSystemInfo> Glob(Pth Pattern, CT Ct);
-	static IEnumerable<FileSystemInfo> Ls(Pth? Path = null, LsOptions? Options = null);
-	static IAsyncEnumerable<FileSystemInfo> Ls(Pth? Path, CT Ct);
-	static IAsyncEnumerable<FileSystemInfo> Ls(Pth? Path, LsOptions? Options, CT Ct);
+	static Pth FullPath(Pth Path);
+	static IEnumerable<Pth> Glob(Pth Pattern);
+	static IEnumerable<Pth> Ls(Pth? Path = null, LsOptions? Options = null);
+	static IEnumerable<Pth> LsDir(Pth? Path = null, LsOptions? Options = null);
+	static IEnumerable<Pth> LsFile(Pth? Path = null, LsOptions? Options = null);
 	static Content Read(Pth Path);
 	static Task<Content> Read(Pth Path, CT Ct);
 	static void Write(Pth Path, Content Source);

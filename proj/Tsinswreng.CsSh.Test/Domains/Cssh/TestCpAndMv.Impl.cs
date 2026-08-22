@@ -14,6 +14,9 @@ public partial class TestCssh{
 		Register(nameof(CpDirectoryGlobCopiesDirectories), CpDirectoryGlobCopiesDirectories!);
 		Register(nameof(CpFileIntoExistingDirectory), CpFileIntoExistingDirectory!);
 		Register(nameof(MvDirectoryIntoExistingDirectory), MvDirectoryIntoExistingDirectory!);
+		Register(nameof(CpRejectsDestinationInsideSource), CpRejectsDestinationInsideSource!);
+		Register(nameof(MvRejectsDestinationInsideSource), MvRejectsDestinationInsideSource!);
+		Register(nameof(CpGlobPreservesConflictingFileWithoutOverwrite), CpGlobPreservesConflictingFileWithoutOverwrite!);
 	}
 
 	/// Recursive copy retains an empty directory as well as ordinary file content.
@@ -139,6 +142,65 @@ public partial class TestCssh{
 			TestSupport.Clean(Root);
 		}
 		return null;
+	}
+
+	/// The destination-overlap guard prevents a directory copy from recursively discovering its own output.
+	public partial Task<object?> CpRejectsDestinationInsideSource(object? O) {
+		var Root = TestSupport.NewRoot();
+		try {
+			ShGlobal.Mkdir(Root + "/source/child");
+			try {
+				ShGlobal.Cp(Root + "/source", Root + "/source/child/output");
+				Assert.IsTrue(false);
+			}
+			catch (IOException) {
+				Assert.IsTrue(ShGlobal.IsDir(Root + "/source"));
+			}
+		}
+		finally {
+			TestSupport.Clean(Root);
+		}
+		return Task.FromResult<object?>(null);
+	}
+
+	/// The move overlap guard prevents overwrite mode from deleting the source before the move is attempted.
+	public partial Task<object?> MvRejectsDestinationInsideSource(object? O) {
+		var Root = TestSupport.NewRoot();
+		try {
+			ShGlobal.Write(Root + "/source/file.txt", "source");
+			try {
+				ShGlobal.Mv(Root + "/source", Root + "/source", new MvOptions(Overwrite: true));
+				Assert.IsTrue(false);
+			}
+			catch (IOException) {
+				Assert.IsTrue(ShGlobal.Exists(Root + "/source/file.txt"));
+			}
+		}
+		finally {
+			TestSupport.Clean(Root);
+		}
+		return Task.FromResult<object?>(null);
+	}
+
+	/// A glob directory merge keeps an existing destination file when overwrite is disabled.
+	public partial Task<object?> CpGlobPreservesConflictingFileWithoutOverwrite(object? O) {
+		var Root = TestSupport.NewRoot();
+		try {
+			ShGlobal.Write(Root + "/source/folder/value.txt", "source");
+			ShGlobal.Write(Root + "/destination/folder/value.txt", "destination");
+			try {
+				ShGlobal.Cp(Root + "/source/*", Root + "/destination");
+				Assert.IsTrue(false);
+			}
+			catch (IOException) {
+				using var Existing = ShGlobal.Read(Root + "/destination/folder/value.txt");
+				Assert.IsTrue((string)Existing == "destination");
+			}
+		}
+		finally {
+			TestSupport.Clean(Root);
+		}
+		return Task.FromResult<object?>(null);
 	}
 }
 

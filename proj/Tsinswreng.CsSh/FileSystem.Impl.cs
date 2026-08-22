@@ -122,7 +122,10 @@ public partial class Sh{
 		return Cp(Source, Destination, null, Ct);
 	}
 
+	/// Copies a file, directory tree, or glob matches while preserving the caller's overwrite policy.
 	public partial async Task<nil> Cp(Pth Source, Pth Destination, CpOptions? Options, CT Ct) {
+		// step 1: observe cancellation before resolving paths or changing the file system.
+		Ct.ThrowIfCancellationRequested();
 		var Overwrite = Options?.Overwrite ?? false;
 		if (HasGlob(Source)) {
 			await CopyMatches(Source, Destination, Overwrite, Ct).ConfigureAwait(false);
@@ -132,10 +135,12 @@ public partial class Sh{
 		var DestinationPath = (str)FullPath(Destination);
 		if (File.Exists(SourcePath)) {
 			DestinationPath = ResolveDestinationPath(SourcePath, DestinationPath);
+			ValidateSourceAndDestination(SourcePath, DestinationPath, false);
 			await CopyFile(SourcePath, DestinationPath, Overwrite, Ct).ConfigureAwait(false);
 		}
 		else if (Directory.Exists(SourcePath)) {
 			DestinationPath = ResolveDestinationPath(SourcePath, DestinationPath);
+			ValidateSourceAndDestination(SourcePath, DestinationPath, true);
 			await CopyDirectory(SourcePath, DestinationPath, Overwrite, Ct).ConfigureAwait(false);
 		}
 		else {
@@ -152,7 +157,10 @@ public partial class Sh{
 		return Mv(Source, Destination, null, Ct);
 	}
 
+	/// Moves a file or directory after validating that replacement cannot target the source itself.
 	public partial async Task<nil> Mv(Pth Source, Pth Destination, MvOptions? Options, CT Ct) {
+		// step 1: reject cancellation before any destination replacement can occur.
+		Ct.ThrowIfCancellationRequested();
 		var Overwrite = Options?.Overwrite ?? false;
 		var SourcePath = (str)FullPath(Source);
 		var DestinationPath = (str)FullPath(Destination);
@@ -161,11 +169,13 @@ public partial class Sh{
 		}
 		if (File.Exists(SourcePath)) {
 			DestinationPath = ResolveDestinationPath(SourcePath, DestinationPath);
+			ValidateSourceAndDestination(SourcePath, DestinationPath, false);
 			EnsureParentDirectory(DestinationPath);
 			File.Move(SourcePath, DestinationPath, Overwrite);
 		}
 		else {
 			DestinationPath = ResolveDestinationPath(SourcePath, DestinationPath);
+			ValidateSourceAndDestination(SourcePath, DestinationPath, true);
 			EnsureParentDirectory(DestinationPath);
 			if (Directory.Exists(DestinationPath)) {
 				if (!Overwrite)
@@ -281,7 +291,10 @@ public partial class Sh{
 		return Append(new Tsinswreng.CsSh.Pth(Path), Source, Ct);
 	}
 
+	/// Copies one file and creates its parent directory; existing files require explicit overwrite permission.
 	private async partial Task CopyFile(str Source, str Destination, bool Overwrite, CT Ct) {
+		// Check cancellation before creating parent directories or opening either file.
+		Ct.ThrowIfCancellationRequested();
 		EnsureParentDirectory(Destination);
 		if (File.Exists(Destination) && !Overwrite)
 			throw new IOException("Destination file already exists.");
@@ -290,7 +303,10 @@ public partial class Sh{
 		await Input.CopyToAsync(Output, Ct).ConfigureAwait(false);
 	}
 
+	/// Copies a complete directory tree, including empty directories, without following a destination into the source.
 	private async partial Task CopyDirectory(str Source, str Destination, bool Overwrite, CT Ct) {
+		// Check cancellation before replacing an existing destination tree.
+		Ct.ThrowIfCancellationRequested();
 		if (Directory.Exists(Destination)) {
 			if (!Overwrite)
 				throw new IOException("Destination directory already exists.");
@@ -299,27 +315,37 @@ public partial class Sh{
 		Directory.CreateDirectory(Destination);
 		// Copy empty directories too: copying only files would silently alter a directory tree.
 		foreach (var SourceDirectory in Directory.EnumerateDirectories(Source, "*", SearchOption.AllDirectories)) {
+			// Keep cancellation responsive between directory creations.
+			Ct.ThrowIfCancellationRequested();
 			var Relative = System.IO.Path.GetRelativePath(Source, SourceDirectory);
 			Directory.CreateDirectory(System.IO.Path.Combine(Destination, Relative));
 		}
 		foreach (var SourceFile in Directory.EnumerateFiles(Source, "*", SearchOption.AllDirectories)) {
+			// Keep cancellation responsive between file copies.
+			Ct.ThrowIfCancellationRequested();
 			var Relative = System.IO.Path.GetRelativePath(Source, SourceFile);
 			await CopyFile(SourceFile, System.IO.Path.Combine(Destination, Relative), false, Ct).ConfigureAwait(false);
 		}
 	}
 
 	/// Copies every glob match as a direct child of Destination, preserving Bash's source/* shape.
+	/// Copies glob matches as direct children of the destination, applying the same overwrite rule to nested files.
 	private async partial Task CopyMatches(str Source, str Destination, bool Overwrite, CT Ct) {
+		// Do not create a destination for a call that was already cancelled.
+		Ct.ThrowIfCancellationRequested();
 		var DestinationPath = (str)FullPath(Destination);
+		// A glob rooted in a directory must not copy into that same directory tree while it is being enumerated.
+		var IsDirectoryPattern = Source.EndsWith('/') || Source.EndsWith('\\');
+		var SourceRoot = GetGlobSourceRoot((str)FullPath(Source));
+		ValidateSourceAndDestination(SourceRoot, DestinationPath, true);
 		Directory.CreateDirectory(DestinationPath);
 		var FoundAny = false;
-		var IsDirectoryPattern = Source.EndsWith('/') || Source.EndsWith('\\');
 		// A trailing slash already selects the library's directory mode. Do not append one
 		// again, or every directory would be copied twice.
 		if (IsDirectoryPattern) {
 			foreach (var Entry in Glob(Source)) {
 				FoundAny = true;
-				await CopyDirectoryMerge(FullPath(Entry), FullPath(Destination / BaseName(Entry)), Ct).ConfigureAwait(false);
+				await CopyDirectoryMerge(FullPath(Entry), FullPath(Destination / BaseName(Entry)), Overwrite, Ct).ConfigureAwait(false);
 			}
 		}
 		else {
@@ -331,7 +357,7 @@ public partial class Sh{
 			}
 			foreach (var Entry in Glob(new Pth(Source + "/"))) {
 				FoundAny = true;
-				await CopyDirectoryMerge(FullPath(Entry), FullPath(Destination / BaseName(Entry)), Ct).ConfigureAwait(false);
+				await CopyDirectoryMerge(FullPath(Entry), FullPath(Destination / BaseName(Entry)), Overwrite, Ct).ConfigureAwait(false);
 			}
 		}
 		if (!FoundAny)
@@ -339,17 +365,44 @@ public partial class Sh{
 	}
 
 	/// Recursively merges Source into Destination for glob-copy semantics.
-	private async partial Task CopyDirectoryMerge(str Source, str Destination, CT Ct) {
+	/// Merges one glob-matched directory into its destination while preserving existing files unless overwrite is enabled.
+	private async partial Task CopyDirectoryMerge(str Source, str Destination, bool Overwrite, CT Ct) {
+		// step 1: create only the destination root; never delete an existing merge target.
 		Directory.CreateDirectory(Destination);
 		foreach (var SourceDirectory in Directory.EnumerateDirectories(Source, "*", SearchOption.AllDirectories)) {
+			// Cancellation is checked between directory operations so a cancelled copy stops before the next mutation.
 			Ct.ThrowIfCancellationRequested();
 			var Relative = System.IO.Path.GetRelativePath(Source, SourceDirectory);
 			Directory.CreateDirectory(System.IO.Path.Combine(Destination, Relative));
 		}
 		foreach (var SourceFile in Directory.EnumerateFiles(Source, "*", SearchOption.AllDirectories)) {
+			// The caller's overwrite policy applies equally to files discovered below glob-matched directories.
+			Ct.ThrowIfCancellationRequested();
 			var Relative = System.IO.Path.GetRelativePath(Source, SourceFile);
-			await CopyFile(SourceFile, System.IO.Path.Combine(Destination, Relative), true, Ct).ConfigureAwait(false);
+			await CopyFile(SourceFile, System.IO.Path.Combine(Destination, Relative), Overwrite, Ct).ConfigureAwait(false);
 		}
+	}
+
+	/// Rejects directory operations whose destination is the source itself or one of its descendants.
+	private partial void ValidateSourceAndDestination(str SourcePath, str DestinationPath, bool SourceIsDirectory) {
+		// A directory cannot be copied or moved into itself: the operation would recurse or delete its own source.
+		if (SourceIsDirectory && IsSameOrDescendantPath(SourcePath, DestinationPath))
+			throw new IOException("Source and destination paths overlap.");
+	}
+
+	/// Compares two absolute paths using platform case rules without resolving symbolic links.
+	private static partial bool IsSameOrDescendantPath(str Root, str Candidate) {
+		// Full paths are compared with the platform's case rules to avoid bypassing the safety check on Windows.
+		var Comparison = OperatingSystem.IsWindows() ? StringComparison.OrdinalIgnoreCase : StringComparison.Ordinal;
+		var NormalizedRoot = System.IO.Path.TrimEndingDirectorySeparator(System.IO.Path.GetFullPath(Root));
+		var NormalizedCandidate = System.IO.Path.TrimEndingDirectorySeparator(System.IO.Path.GetFullPath(Candidate));
+		if (string.Equals(NormalizedRoot, NormalizedCandidate, Comparison))
+			return true;
+		var Relative = System.IO.Path.GetRelativePath(NormalizedRoot, NormalizedCandidate);
+		return !string.Equals(Relative, ".", StringComparison.Ordinal)
+			&& !Relative.Equals("..", Comparison)
+			&& !Relative.StartsWith(".." + System.IO.Path.DirectorySeparatorChar, Comparison)
+			&& !System.IO.Path.IsPathRooted(Relative);
 	}
 
 	/// Recognises every non-literal syntax prefix supported by the glob parser.
@@ -374,6 +427,17 @@ public partial class Sh{
 		// keeps the library pattern relative without reimplementing glob parsing.
 		var StaticPrefix = FullPattern[..MagicIndex];
 		return NormalizePath(System.IO.Path.GetDirectoryName(StaticPrefix) ?? System.IO.Path.GetPathRoot(FullPattern)!);
+	}
+
+	/// Extracts the static directory prefix used to reject glob copies into their own source tree.
+	private partial str GetGlobSourceRoot(str FullPattern) {
+		// Everything before the first wildcard is a static source directory. Keeping it
+		// separate from the enumeration root avoids rejecting valid sibling destinations.
+		var MagicIndex = FullPattern.IndexOfAny(['*', '?', '[', '{']);
+		if (MagicIndex < 0)
+			return NormalizePath(System.IO.Path.GetDirectoryName(FullPattern) ?? CurrentDirectory);
+		var Prefix = FullPattern[..MagicIndex].TrimEnd(System.IO.Path.DirectorySeparatorChar, System.IO.Path.AltDirectorySeparatorChar);
+		return NormalizePath(string.IsNullOrEmpty(Prefix) ? CurrentDirectory : Prefix);
 	}
 
 	private partial str ResolveDestinationPath(str SourcePath, str DestinationPath) {

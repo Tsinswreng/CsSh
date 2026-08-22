@@ -27,5 +27,14 @@ public partial class TestCssh{
 
 	/// Verifies an existing directory destination receives the source directory name.
 	public partial Task<object?> MvDirectoryIntoExistingDirectory(object? O);
+
+	/// Verifies copying a directory into itself is rejected before recursive enumeration starts.
+	public partial Task<object?> CpRejectsDestinationInsideSource(object? O);
+
+	/// Verifies moving a directory onto itself is rejected without deleting the source.
+	public partial Task<object?> MvRejectsDestinationInsideSource(object? O);
+
+	/// Verifies glob directory merges respect the default non-overwrite policy.
+	public partial Task<object?> CpGlobPreservesConflictingFileWithoutOverwrite(object? O);
 }
 

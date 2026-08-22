@@ -172,8 +172,8 @@ public partial class Sh{
 	/// 複製 glob 匹配的每個項目至目的地。
 	private partial Task CopyMatches(str Source, str Destination, bool Overwrite, CT Ct);
 
-	/// 將來源目錄內容合併至目的目錄。
-	private partial Task CopyDirectoryMerge(str Source, str Destination, CT Ct);
+	/// 將來源目錄內容合併至目的目錄，並依 Overwrite 決定檔案衝突處理方式。
+	private partial Task CopyDirectoryMerge(str Source, str Destination, bool Overwrite, CT Ct);
 
 	/// 判斷路徑是否含有 Cssh 支援的 glob 萬用字元。
 	private partial bool HasGlob(str Path);
@@ -182,8 +182,17 @@ public partial class Sh{
 	/// IsDirectoryPattern 保留原始輸入的尾隨分隔符語義，因為 Path.GetRelativePath 會將其移除。
 	private partial str GetGlobSearchRoot(str FullPattern, bool IsDirectoryPattern);
 
+	/// 取得 glob 萬用字元前的靜態目錄，供來源／目的地重疊檢查使用。
+	private partial str GetGlobSourceRoot(str FullPattern);
+
 	/// 按目的地是否為目錄，解析來源項目的最終目的路徑。
 	private partial str ResolveDestinationPath(str SourcePath, str DestinationPath);
+
+	/// 在複製或移動開始前拒絕來源與目的地相同或互相包含的危險路徑。
+	private partial void ValidateSourceAndDestination(str SourcePath, str DestinationPath, bool SourceIsDirectory);
+
+	/// 判斷 Candidate 是否等於 Root 或位於 Root 目錄之下。
+	private static partial bool IsSameOrDescendantPath(str Root, str Candidate);
 
 	/// 建立所有 Ls 系列共用的 BCL 列舉選項，保留可列舉的隱藏和系統項目。
 	private partial EnumerationOptions MkLsEnumerationOptions(LsOptions? Options);

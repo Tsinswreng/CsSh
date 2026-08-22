@@ -64,10 +64,10 @@ Bash 風格的路徑函數掛在 `Sh`，因此可直接配合 `using static ShGl
 ```cs
 BaseName("src/app/config.json"); // config.json
 DirName("src/app/config.json");  // src/app
-RealPath("src/../README.typ");   // 依目前 Cd 展開的絕對路徑
+FullPath("src/../README.typ");   // 依目前 Cd 展開的絕對路徑
 ```
 
-`ShGlobal.RealPath` 是預設 Shell 的靜態便利名；持有 `Sh` 實例時，對應成員名為 `Sh.FullPath`：
+`ShGlobal.FullPath` 是預設 Shell 的靜態便利名；持有 `Sh` 實例時，對應成員名為 `Sh.FullPath`：
 
 ```cs
 var Sh = new Tsinswreng.CsSh.Sh();
