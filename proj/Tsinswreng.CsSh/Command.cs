@@ -59,6 +59,33 @@ public sealed partial class Command:IDisposable,IAsyncDisposable{
 
 	/// 异步释放结果流的临时资源；进程尚未结束时同时终止该进程。
 	public partial ValueTask DisposeAsync();
+
+	/// 將 stdout 與 stderr 依序寫入同一組目標，再等待命令結束。
+	private partial Task<CommandExit> Out(IReadOnlyList<Content> Targets, CT Ct);
+
+	/// 確保命令只會啟動一次；由結果資料流的讀取包裝呼叫。
+	internal partial void EnsureStarted();
+
+	/// 啟動外部進程、轉送各條資料流並完成退出結果。
+	private partial Task Start();
+
+	/// 根據命令執行設定建立不經 Shell 解譯的 ProcessStartInfo。
+	private partial ProcessStartInfo MakeStartInfo();
+
+	/// 將可選標準輸入來源複製至已啟動進程。
+	private partial Task CopyInput(Process Process);
+
+	/// 將一條 Content 資料流複製至目標。
+	private static partial Task Write(Content Target, Content Source, CT Ct);
+
+	/// 依序將多條來源寫至同一目標，避免同時寫入同一資料流。
+	private static partial Task Write(Content Target, IReadOnlyList<Content> Sources, CT Ct);
+
+	/// 完成 stdout 與 stderr 管線，並將啟動或轉送失敗傳遞給讀取端。
+	private partial Task CompletePipes(Exception? Error = null);
+
+	/// 終止仍在執行中的子進程。
+	private partial void TryKill();
 }
 
 /// 建立 Command 時的可選配置。

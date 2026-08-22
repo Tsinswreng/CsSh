@@ -143,7 +143,7 @@ public partial class Sh{
 		return Result.ToString();
 	}
 
-	private IReadOnlyDictionary<str, str> SnapshotEnvironment(CommandOptions Options) {
+	private partial IReadOnlyDictionary<str, str> SnapshotEnvironment(CommandOptions Options) {
 		var Comparer = OperatingSystem.IsWindows() ? StringComparer.OrdinalIgnoreCase : StringComparer.Ordinal;
 		var Result = new Dictionary<str, str>(Comparer);
 		foreach (var Pair in System.Environment.GetEnvironmentVariables().Cast<System.Collections.DictionaryEntry>()) {

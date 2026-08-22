@@ -56,6 +56,15 @@ public sealed partial class Content:IDisposable,IAsyncDisposable{
 
 	/// 非同步釋放 Content 擁有的底層資源；不擁有的外部 Stream 不會被關閉。
 	public partial ValueTask DisposeAsync();
+
+	/// 取得唯一的文字讀取工作，確保同步與非同步讀取共用同一次 Stream 消費。
+	private partial Task<str> GetTextTask(CT Ct);
+
+	/// 非同步讀取並解碼底層資料流。
+	private partial Task<str> ReadText(CT Ct);
+
+	/// 在建立文字讀取器前驗證底層資料流可讀。
+	private partial void EnsureReadable();
 }
 
 /// Content 的建立選項。

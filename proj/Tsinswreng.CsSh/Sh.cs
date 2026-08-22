@@ -90,6 +90,9 @@ public partial class Sh{
 	/// 新程式優先使用 Args 列表重載；Q 適用於保留 Bash 風格命令字串的腳本。
 	public partial str Q(str Value);
 
+	/// 合併目前進程環境與命令設定指定的覆寫項目，建立命令啟動時使用的環境快照。
+	private partial IReadOnlyDictionary<str, str> SnapshotEnvironment(CommandOptions Options);
+
 	/// 非同步地将 Source 复制到 Target。
 	/// 读取命令的 Result.Stdout 或 Result.Stderr 会触发命令执行；Source 结束时不会关闭调用方提供的 Target。
 	public partial void Write(Content Target, Content Source);

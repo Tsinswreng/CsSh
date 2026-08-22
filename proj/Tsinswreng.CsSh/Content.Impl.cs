@@ -17,14 +17,14 @@ public sealed partial class Content{
 		return await GetTextTask(Ct).WaitAsync(Ct).ConfigureAwait(false);
 	}
 
-	private Task<str> GetTextTask(CT Ct) {
+	private partial Task<str> GetTextTask(CT Ct) {
 		lock (this) {
 			TextTask ??= ReadText(Ct);
 			return TextTask;
 		}
 	}
 
-	private async Task<str> ReadText(CT Ct) {
+	private async partial Task<str> ReadText(CT Ct) {
 		EnsureReadable();
 		using var Reader = new StreamReader(Stream, Options.Encoding ?? Encoding.UTF8, detectEncodingFromByteOrderMarks: true, bufferSize: 81920, leaveOpen: true);
 		return await Reader.ReadToEndAsync(Ct).ConfigureAwait(false);
@@ -41,7 +41,7 @@ public sealed partial class Content{
 	}
 
 	/// Rejects text conversion of a write-only target before StreamReader produces a less useful exception.
-	private void EnsureReadable() {
+	private partial void EnsureReadable() {
 		if (!Stream.CanRead)
 			throw new NotSupportedException("Content stream is not readable.");
 	}

@@ -192,12 +192,15 @@ public partial class Sh{
 	public async partial IAsyncEnumerable<FileSystemInfo> Glob(Pth Pattern, [EnumeratorCancellation] CT Ct) {
 		var Regex = GlobToRegex(FullPath(Pattern));
 		var Root = GlobRoot(Pattern);
-		if (!Directory.Exists(Root))
+		if (!Directory.Exists(Root)){
 			yield break;
-		foreach (var Entry in new DirectoryInfo(Root).EnumerateFileSystemInfos("*", SearchOption.AllDirectories)) {
+		}
+		var Entrys = new DirectoryInfo(Root).EnumerateFileSystemInfos("*", SearchOption.AllDirectories);
+		foreach (var Entry in Entrys) {
 			Ct.ThrowIfCancellationRequested();
-			if (Regex.IsMatch(ToShellPath(Entry.FullName)))
+			if (Regex.IsMatch(ToShellPath(Entry.FullName))){
 				yield return Entry;
+			}
 			await Task.Yield();
 		}
 	}
@@ -274,7 +277,7 @@ public partial class Sh{
 		return Append(new Tsinswreng.CsSh.Pth(Path), Source, Ct);
 	}
 
-	private async Task CopyFile(str Source, str Destination, bool Overwrite, CT Ct) {
+	private async partial Task CopyFile(str Source, str Destination, bool Overwrite, CT Ct) {
 		EnsureParentDirectory(Destination);
 		if (File.Exists(Destination) && !Overwrite)
 			throw new IOException("Destination file already exists.");
@@ -283,7 +286,7 @@ public partial class Sh{
 		await Input.CopyToAsync(Output, Ct).ConfigureAwait(false);
 	}
 
-	private async Task CopyDirectory(str Source, str Destination, bool Overwrite, CT Ct) {
+	private async partial Task CopyDirectory(str Source, str Destination, bool Overwrite, CT Ct) {
 		if (Directory.Exists(Destination)) {
 			if (!Overwrite)
 				throw new IOException("Destination directory already exists.");
@@ -302,7 +305,7 @@ public partial class Sh{
 	}
 
 	/// Copies every glob match as a direct child of Destination, preserving Bash's source/* shape.
-	private async Task CopyMatches(str Source, str Destination, bool Overwrite, CT Ct) {
+	private async partial Task CopyMatches(str Source, str Destination, bool Overwrite, CT Ct) {
 		var DestinationPath = (str)FullPath(Destination);
 		Directory.CreateDirectory(DestinationPath);
 		var FoundAny = false;
@@ -324,7 +327,7 @@ public partial class Sh{
 	}
 
 	/// Recursively merges Source into Destination for glob-copy semantics.
-	private async Task CopyDirectoryMerge(str Source, str Destination, CT Ct) {
+	private async partial Task CopyDirectoryMerge(str Source, str Destination, CT Ct) {
 		Directory.CreateDirectory(Destination);
 		foreach (var SourceDirectory in Directory.EnumerateDirectories(Source, "*", SearchOption.AllDirectories)) {
 			Ct.ThrowIfCancellationRequested();
@@ -338,11 +341,11 @@ public partial class Sh{
 	}
 
 	/// Glob detection is deliberately limited to the same wildcard characters supported by Find.
-	private bool HasGlob(str Path) {
+	private partial bool HasGlob(str Path) {
 		return Path.IndexOfAny(['*', '?']) >= 0;
 	}
 
-	private str GlobRoot(str Pattern) {
+	private partial str GlobRoot(str Pattern) {
 		var NormalizedPattern = NormalizePath(Pattern);
 		var MagicIndex = NormalizedPattern.IndexOfAny(['*', '?']);
 		if (MagicIndex < 0) {
@@ -355,14 +358,14 @@ public partial class Sh{
 		return FullPath(string.IsNullOrEmpty(Root) ? "." : Root);
 	}
 
-	private str ResolveDestinationPath(str SourcePath, str DestinationPath) {
+	private partial str ResolveDestinationPath(str SourcePath, str DestinationPath) {
 		if (!Directory.Exists(DestinationPath))
 			return DestinationPath;
 		var SourceName = System.IO.Path.GetFileName(SourcePath.TrimEnd(System.IO.Path.DirectorySeparatorChar, System.IO.Path.AltDirectorySeparatorChar));
 		return System.IO.Path.Combine(DestinationPath, SourceName);
 	}
 
-	private Regex GlobToRegex(str Pattern) {
+	private partial Regex GlobToRegex(str Pattern) {
 		var Builder = new StringBuilder("^");
 		for (var Index = 0; Index < Pattern.Length; Index++) {
 			var Character = Pattern[Index];
@@ -390,11 +393,11 @@ public partial class Sh{
 		return new(Builder.ToString(), OperatingSystem.IsWindows() ? RegexOptions.IgnoreCase : RegexOptions.None);
 	}
 
-	private str ToShellPath(str FileSystemPath) {
+	private partial str ToShellPath(str FileSystemPath) {
 		return NormalizePath(System.IO.Path.GetFullPath(FileSystemPath));
 	}
 
-	private void EnsureParentDirectory(str FileSystemPath) {
+	private partial void EnsureParentDirectory(str FileSystemPath) {
 		var Parent = System.IO.Path.GetDirectoryName(FileSystemPath);
 		if (!string.IsNullOrEmpty(Parent))
 			Directory.CreateDirectory(Parent);

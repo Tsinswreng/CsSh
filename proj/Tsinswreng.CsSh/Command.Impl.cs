@@ -59,7 +59,7 @@ public sealed partial class Command{
 	}
 
 	/// Keeps a single output target safe from concurrent stdout/stderr writes.
-	private async Task<CommandExit> Out(IReadOnlyList<Content> Targets, CT Ct) {
+	private async partial Task<CommandExit> Out(IReadOnlyList<Content> Targets, CT Ct) {
 		await Task.WhenAll(
 			Write(Targets[0], [Result.Stdout, Result.Stderr], Ct),
 			Done).ConfigureAwait(false);
@@ -93,7 +93,7 @@ public sealed partial class Command{
 		await Result.Stderr.DisposeAsync().ConfigureAwait(false);
 	}
 
-	internal void EnsureStarted() {
+	internal partial void EnsureStarted() {
 		lock (Gate) {
 			if (IsDisposed)
 				return;
@@ -101,7 +101,7 @@ public sealed partial class Command{
 		}
 	}
 
-	private async Task Start() {
+	private async partial Task Start() {
 		try {
 			var StartInfo = MakeStartInfo();
 			Process = new(){StartInfo = StartInfo, EnableRaisingEvents = true};
@@ -131,7 +131,7 @@ public sealed partial class Command{
 		}
 	}
 
-	private ProcessStartInfo MakeStartInfo() {
+	private partial ProcessStartInfo MakeStartInfo() {
 		if (string.IsNullOrWhiteSpace(Options.Exe))
 			throw new ArgumentException("Command cannot be empty.", nameof(Options));
 
@@ -151,7 +151,7 @@ public sealed partial class Command{
 		return Result;
 	}
 
-	private async Task CopyInput(Process Process) {
+	private async partial Task CopyInput(Process Process) {
 		if (Options.Options.Input is null)
 			return;
 		await Options.Options.Input.Stream.CopyToAsync(Process.StandardInput.BaseStream, Options.Ct).ConfigureAwait(false);
@@ -159,23 +159,23 @@ public sealed partial class Command{
 	}
 
 	/// Copies one Content source to its target without requiring a Shell instance.
-	private static async Task Write(Content Target, Content Source, CT Ct) {
+	private static async partial Task Write(Content Target, Content Source, CT Ct) {
 		await Source.Stream.CopyToAsync(Target.Stream, Ct).ConfigureAwait(false);
 		await Target.Stream.FlushAsync(Ct).ConfigureAwait(false);
 	}
 
 	/// Serializes multiple sources when stdout and stderr share the same target.
-	private static async Task Write(Content Target, IReadOnlyList<Content> Sources, CT Ct) {
+	private static async partial Task Write(Content Target, IReadOnlyList<Content> Sources, CT Ct) {
 		foreach (var Source in Sources)
 			await Write(Target, Source, Ct).ConfigureAwait(false);
 	}
 
-	private async Task CompletePipes(Exception? Error = null) {
+	private async partial Task CompletePipes(Exception? Error) {
 		await StdoutPipe.Writer.CompleteAsync(Error).ConfigureAwait(false);
 		await StderrPipe.Writer.CompleteAsync(Error).ConfigureAwait(false);
 	}
 
-	private void TryKill() {
+	private partial void TryKill() {
 		try {
 			if (Process is {HasExited: false})
 				Process.Kill(entireProcessTree: true);
@@ -186,58 +186,8 @@ public sealed partial class Command{
 	}
 }
 
-/// 讀取前啟動所屬 Command 的只讀 Stream 包裝。
-/// 包裝不緩衝資料，讀取會直接進入 PipeReader 對應的非同步 Stream。
-internal sealed class CommandReadStream:Stream{
-	private readonly Stream Inner;
-	private readonly Action Start;
-
-	internal CommandReadStream(Stream Inner, Action Start) {
-		this.Inner = Inner;
-		this.Start = Start;
-	}
-
-	public override bool CanRead => Inner.CanRead;
-	public override bool CanSeek => false;
-	public override bool CanWrite => false;
-	public override long Length => throw new NotSupportedException();
-	public override long Position{get => throw new NotSupportedException(); set => throw new NotSupportedException();}
-	public override void Flush() {
-		throw new NotSupportedException();
-	}
-	public override Task FlushAsync(CT Ct) {
-		throw new NotSupportedException();
-	}
-	public override int Read(byte[] Buffer, int Offset, int Count) {
-		Start();
-		return Inner.Read(Buffer, Offset, Count);
-	}
-	public override int Read(Span<byte> Buffer) {
-		Start();
-		return Inner.Read(Buffer);
-	}
-	public override Task<i32> ReadAsync(byte[] Buffer, int Offset, int Count, CT Ct) {
-		Start();
-		return Inner.ReadAsync(Buffer, Offset, Count, Ct);
-	}
-	public override ValueTask<i32> ReadAsync(Memory<byte> Buffer, CT Ct = default) {
-		Start();
-		return Inner.ReadAsync(Buffer, Ct);
-	}
-	public override long Seek(long Offset, SeekOrigin Origin) {
-		throw new NotSupportedException();
-	}
-	public override void SetLength(long Value) {
-		throw new NotSupportedException();
-	}
-	public override void Write(byte[] Buffer, int Offset, int Count) {
-		throw new NotSupportedException();
-	}
-}
-
 public sealed partial class CommandFailedException{
 	public partial CommandFailedException(CommandExit Exit):base($"Command failed with exit code {Exit.ExitCode}.") {
 		this.Exit = Exit;
 	}
 }
-

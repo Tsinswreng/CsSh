@@ -1,3 +1,5 @@
+using System.Text.RegularExpressions;
+
 namespace Tsinswreng.CsSh;
 
 /// Cp 的可选行为。
@@ -138,4 +140,34 @@ public partial IAsyncEnumerable<FileSystemInfo> Glob(Pth Pattern, CT Ct);
 
 	/// 以字串路徑非同步追加檔案內容；Ct 必須作為最後一個位置參數傳入。
 	public partial Task<nil> Append(str Path, Content Source, CT Ct);
+
+	/// 將一個檔案複製至既有目的地規則所解析出的目標位置。
+	private partial Task CopyFile(str Source, str Destination, bool Overwrite, CT Ct);
+
+	/// 遞迴複製一個目錄樹，並依 Overwrite 決定衝突處理方式。
+	private partial Task CopyDirectory(str Source, str Destination, bool Overwrite, CT Ct);
+
+	/// 複製 glob 匹配的每個項目至目的地。
+	private partial Task CopyMatches(str Source, str Destination, bool Overwrite, CT Ct);
+
+	/// 將來源目錄內容合併至目的目錄。
+	private partial Task CopyDirectoryMerge(str Source, str Destination, CT Ct);
+
+	/// 判斷路徑是否含有 Cssh 支援的 glob 萬用字元。
+	private partial bool HasGlob(str Path);
+
+	/// 取得 glob 中第一個萬用字元之前、可直接枚舉的目錄根。
+	private partial str GlobRoot(str Pattern);
+
+	/// 按目的地是否為目錄，解析來源項目的最終目的路徑。
+	private partial str ResolveDestinationPath(str SourcePath, str DestinationPath);
+
+	/// 將 Cssh glob 轉換為完整路徑匹配使用的正規表示式。
+	private partial Regex GlobToRegex(str Pattern);
+
+	/// 將檔案系統路徑轉成 Cssh 對外統一使用正斜線的路徑表示。
+	private partial str ToShellPath(str FileSystemPath);
+
+	/// 在建立檔案前確保其父目錄存在。
+	private partial void EnsureParentDirectory(str FileSystemPath);
 }
