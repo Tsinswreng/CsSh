@@ -134,14 +134,14 @@ if (!Result.Exit.IsSuccess) {
 ]
 
 #H[輸入、輸出與管道][
-	`CommandOptions.Input` 將一個 `Content` 作為子命令 stdin。命令輸出的 `Result.Stdout` 和 `Result.Stderr` 也是 `Content`，因此可直接連接到下一個命令：
+	`CommandOptions.Stdin` 將一個 `Content` 作為子命令 stdin。命令輸出的 `Result.Stdout` 和 `Result.Stderr` 也是 `Content`，因此可直接連接到下一個命令：
 
 ```cs
 await using var Log = Cmd("git", ["log", "--oneline"], Ct);
 await using var Hash = Cmd(
 	"git",
 	["hash-object", "--stdin"],
-	new CommandOptions(Input: Log.Result.Stdout),
+	new CommandOptions(Stdin: Log.Result.Stdout),
 	Ct);
 
 var HashResult = await Hash.Text(Ct);
@@ -163,7 +163,19 @@ await Command.Out(Stdout, Stderr, Ct);
 
 	這裡分別寫入當前 Shell 的標準輸出與標準錯誤；如果只需要一個合併文件，直接使用 `Out("build.log", Ct)` 即可。
 
-	大量輸出應使用流式 `Result.Stdout`／`Result.Stderr`，不要先全部轉成字符串。`Text` 適合 JSON、版本號與錯誤摘要等有限輸出。
+大量輸出應使用流式 `Result.Stdout`／`Result.Stderr`，不要先全部轉成字符串。`Text` 適合 JSON、版本號與錯誤摘要等有限輸出。
+
+每個命令的 stdout 與 stderr 各有一條有限容量的 Pipe。預設每條為 64 KiB；當呼叫端讀取較慢時，Pipe 會對子程序施加背壓，而不會無限制累積記憶體。需要調整暫存量時，在建立該命令時設定 `PipeBufferSizeBytes`：
+
+```cs
+await using var Command = Cmd(
+	"tool",
+	[],
+	new CommandOptions(PipeBufferSizeBytes: 256 * 1024),
+	Ct);
+```
+
+此值是每一條 Pipe 的位元組上限，stdout 與 stderr 分別計算。只等待 `Command.Done` 而不讀兩條輸出時，有限 Pipe 最終會填滿並讓子程序等待；若要保存大量輸出，應在命令執行期間使用 `Out("tool.log", Ct)` 流式寫入檔案。
 ]
 
 #H[Content][

@@ -15,6 +15,9 @@ public partial class TestCssh{
 		Register(nameof(ExeWritesDefaultOutput), ExeWritesDefaultOutput!);
 		Register(nameof(CmdArgumentListNeedsNoEscaping), CmdArgumentListNeedsNoEscaping!);
 		Register(nameof(QQuotesCommandStringArgument), QQuotesCommandStringArgument!);
+		Register(nameof(CommandPipeBufferSizeDrainsBothOutputs), CommandPipeBufferSizeDrainsBothOutputs!);
+		Register(nameof(CommandSmallPipeDrainsLargeDualOutput), CommandSmallPipeDrainsLargeDualOutput!);
+		Register(nameof(CommandRejectsNonPositivePipeBufferSize), CommandRejectsNonPositivePipeBufferSize!);
 	}
 
 	/// Observing Done starts the lazy process; stdout remains consumable after it exits.
@@ -32,8 +35,8 @@ public partial class TestCssh{
 	public async partial Task<object?> XPassesContentAsStdin(object? O) {
 		using var CtSource = new CancellationTokenSource();
 		var Ct = CtSource.Token;
-		Content Input = "stream-input";
-		await using var Command = ShGlobal.Cmd("dotnet", ["--version"], new CommandOptions(Input), Ct);
+		Content Stdin = "stream-input";
+		await using var Command = ShGlobal.Cmd("dotnet", ["--version"], new CommandOptions(Stdin), Ct);
 		var Exit = await Command.Done;
 		Assert.IsTrue(Exit.IsSuccess);
 		return null;
@@ -95,6 +98,57 @@ public partial class TestCssh{
 		var Value = "a b\\c\"d";
 		Assert.IsTrue(ShGlobal.Q(Value) == "\"a b\\c\\\"d\"");
 		Assert.IsTrue(ShGlobal.Q("tail\\") == "\"tail\\\\\"");
+		return Task.FromResult<object?>(null);
+	}
+
+	/// A small per-command Pipe capacity must still permit Out to consume both redirected streams together.
+	public async partial Task<object?> CommandPipeBufferSizeDrainsBothOutputs(object? O) {
+		using var CtSource = new CancellationTokenSource();
+		var Ct = CtSource.Token;
+		await using var Buffer = new MemoryStream();
+		await using var Output = new Content(Buffer, new(LeaveOpen: true));
+		var Options = new CommandOptions(PipeBufferSizeBytes: 1024);
+		var Command = OperatingSystem.IsWindows()
+			? ShGlobal.TryCmd("cmd.exe", ["/c", "echo stdout& echo stderr 1>&2"], Options, Ct)
+			: ShGlobal.TryCmd("/bin/sh", ["-c", "printf stdout; printf stderr >&2"], Options, Ct);
+		await using (Command) {
+			var Exit = await Command.Out(Output, Ct);
+			Buffer.Position = 0;
+			var Text = await Output.Text(Ct);
+			Assert.IsTrue(Exit.IsSuccess);
+			Assert.IsTrue(Text.Contains("stdout", StringComparison.Ordinal));
+			Assert.IsTrue(Text.Contains("stderr", StringComparison.Ordinal));
+		}
+		return null;
+	}
+
+	/// A one-kibibyte Pipe must apply bounded buffering even when each stream produces substantially more data.
+	public async partial Task<object?> CommandSmallPipeDrainsLargeDualOutput(object? O) {
+		using var CtSource = new CancellationTokenSource(TimeSpan.FromSeconds(10));
+		var Ct = CtSource.Token;
+		await using var Buffer = new MemoryStream();
+		await using var Output = new Content(Buffer, new(LeaveOpen: true));
+		var Options = new CommandOptions(PipeBufferSizeBytes: 128);
+		var Command = OperatingSystem.IsWindows()
+			? ShGlobal.TryCmd("cmd.exe", ["/c", "for /L %i in (1,1,256) do @echo O& for /L %i in (1,1,256) do @echo E 1>&2"], Options, Ct)
+			: ShGlobal.TryCmd("/bin/sh", ["-c", "i=0; while [ $i -lt 256 ]; do printf O; printf E >&2; i=$((i + 1)); done"], Options, Ct);
+		await using (Command) {
+			var Exit = await Command.Out(Output, Ct);
+			Assert.IsTrue(Exit.IsSuccess);
+			Assert.IsTrue(Buffer.Length > Options.PipeBufferSizeBytes * 2);
+		}
+		return null;
+	}
+
+	/// Invalid capacities are configuration errors, so construction fails before a child process is created.
+	public partial Task<object?> CommandRejectsNonPositivePipeBufferSize(object? O) {
+		try {
+			ShGlobal.Cmd("dotnet", ["--version"], new CommandOptions(PipeBufferSizeBytes: 0));
+			Assert.IsTrue(false);
+		}
+		catch (ArgumentOutOfRangeException) {
+			Assert.IsTrue(true);
+		}
 		return Task.FromResult<object?>(null);
 	}
 }

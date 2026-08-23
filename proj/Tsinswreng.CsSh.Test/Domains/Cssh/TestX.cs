@@ -27,5 +27,14 @@ public partial class TestCssh{
 
 	/// Verifies Q produces one quoted command-string argument.
 	public partial Task<object?> QQuotesCommandStringArgument(object? O);
+
+	/// Verifies a command-specific bounded Pipe capacity still drains stdout and stderr into one target.
+	public partial Task<object?> CommandPipeBufferSizeDrainsBothOutputs(object? O);
+
+	/// Verifies both streams can exceed a small bounded Pipe capacity while Out keeps draining them.
+	public partial Task<object?> CommandSmallPipeDrainsLargeDualOutput(object? O);
+
+	/// Verifies a non-positive Pipe capacity is rejected before the command starts.
+	public partial Task<object?> CommandRejectsNonPositivePipeBufferSize(object? O);
 }
 

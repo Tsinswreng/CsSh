@@ -1,6 +1,7 @@
 using System.Diagnostics;
 using System.IO.Pipelines;
 using System.Runtime.CompilerServices;
+using System.Buffers;
 
 namespace Tsinswreng.CsSh;
 
@@ -9,6 +10,9 @@ public sealed partial class Command{
 
 	public partial Command(CommandRunOptions Options) {
 		this.Options = Options;
+		// Each command owns bounded pipes so an unconsumed output stream applies backpressure instead of growing memory forever.
+		StdoutPipe = new(MkPipeOptions(Options.Options.PipeBufferSizeBytes));
+		StderrPipe = new(MkPipeOptions(Options.Options.PipeBufferSizeBytes));
 		Result = new(
 			new(new CommandReadStream(StdoutPipe.Reader.AsStream(), EnsureStarted), new(LeaveOpen: false)),
 			new(new CommandReadStream(StderrPipe.Reader.AsStream(), EnsureStarted), new(LeaveOpen: false)));
@@ -25,7 +29,7 @@ public sealed partial class Command{
 	}
 
 	public partial Task<CommandExit> Out(Content Target, CT Ct) {
-		return Out([Target, Target], Ct);
+		return OutMerged(Target, Ct);
 	}
 
 	public async partial Task<CommandExit> Out(Pth TargetPath, CT Ct) {
@@ -43,6 +47,9 @@ public sealed partial class Command{
 	}
 
 	public async partial Task<CommandExit> Out(Content Stdout, Content Stderr, CT Ct) {
+		if (ReferenceEquals(Stdout, Stderr)) {
+			return await OutMerged(Stdout, Ct).ConfigureAwait(false);
+		}
 		await Task.WhenAll(
 			Write(Stdout, Result.Stdout, Ct),
 			Write(Stderr, Result.Stderr, Ct),
@@ -58,10 +65,10 @@ public sealed partial class Command{
 		return new(await Stdout.ConfigureAwait(false), await Stderr.ConfigureAwait(false), await Done.ConfigureAwait(false));
 	}
 
-	/// Keeps a single output target safe from concurrent stdout/stderr writes.
-	private async partial Task<CommandExit> Out(IReadOnlyList<Content> Targets, CT Ct) {
+	/// Keeps a single output target safe while continuing to drain both bounded pipes concurrently.
+	private async partial Task<CommandExit> OutMerged(Content Target, CT Ct) {
 		await Task.WhenAll(
-			Write(Targets[0], [Result.Stdout, Result.Stderr], Ct),
+			WriteMerged(Target, [Result.Stdout, Result.Stderr], Ct),
 			Done).ConfigureAwait(false);
 		return await Done.ConfigureAwait(false);
 	}
@@ -166,7 +173,7 @@ public sealed partial class Command{
 			FileName = Options.Exe,
 			WorkingDirectory = Options.Cwd,
 			UseShellExecute = false,
-			RedirectStandardInput = Options.Options.Input is not null,
+			RedirectStandardInput = Options.Options.Stdin is not null,
 			RedirectStandardOutput = true,
 			RedirectStandardError = true,
 		};
@@ -181,18 +188,18 @@ public sealed partial class Command{
 	/// Copies the optional Content input and closes stdin so the child can observe end-of-file.
 	private async partial Task CopyInput(Process Process) {
 		// No input means stdin must still be closed when the process starts, otherwise readers waiting for EOF can hang.
-		if (Options.Options.Input is null) {
+		if (Options.Options.Stdin is null) {
 			await CloseInput(Process).ConfigureAwait(false);
 			return;
 		}
-		await Options.Options.Input.Stream.CopyToAsync(Process.StandardInput.BaseStream, Options.Ct).ConfigureAwait(false);
+		await Options.Options.Stdin.Stream.CopyToAsync(Process.StandardInput.BaseStream, Options.Ct).ConfigureAwait(false);
 		await CloseInput(Process).ConfigureAwait(false);
 	}
 
 	/// Closes redirected stdin after normal input completion or an input-copy failure.
 	private partial async Task CloseInput(Process Process) {
 		// Closing stdin is idempotent for this lifecycle and guarantees the child observes EOF on every path.
-		if (Options.Options.Input is null)
+		if (Options.Options.Stdin is null)
 			return;
 		try {
 			await Process.StandardInput.BaseStream.DisposeAsync().ConfigureAwait(false);
@@ -215,10 +222,49 @@ public sealed partial class Command{
 		await Target.Stream.FlushAsync(Ct).ConfigureAwait(false);
 	}
 
-	/// Serializes multiple sources when stdout and stderr share the same target.
-	private static async partial Task Write(Content Target, IReadOnlyList<Content> Sources, CT Ct) {
-		foreach (var Source in Sources)
-			await Write(Target, Source, Ct).ConfigureAwait(false);
+	/// Drains every source concurrently while serializing only the writes to the shared target stream.
+	private static async partial Task WriteMerged(Content Target, IReadOnlyList<Content> Sources, CT Ct) {
+		ArgumentNullException.ThrowIfNull(Target);
+		ArgumentNullException.ThrowIfNull(Sources);
+		using var WriteGate = new SemaphoreSlim(1, 1);
+		var CopyTasks = Sources.Select(CopyOne).ToArray();
+		await Task.WhenAll(CopyTasks).ConfigureAwait(false);
+		await Target.Stream.FlushAsync(Ct).ConfigureAwait(false);
+
+		async Task CopyOne(Content Source) {
+			ArgumentNullException.ThrowIfNull(Source);
+			var Buffer = ArrayPool<byte>.Shared.Rent(81920);
+			try {
+				while (true) {
+					// Read each source independently so a verbose stderr stream cannot fill its bounded pipe behind stdout.
+					var Read = await Source.Stream.ReadAsync(Buffer.AsMemory(), Ct).ConfigureAwait(false);
+					if (Read == 0) {
+						break;
+					}
+					// The shared target is not assumed thread-safe; only this small write section is serialized.
+					await WriteGate.WaitAsync(Ct).ConfigureAwait(false);
+					try {
+						await Target.Stream.WriteAsync(Buffer.AsMemory(0, Read), Ct).ConfigureAwait(false);
+					}
+					finally {
+						WriteGate.Release();
+					}
+				}
+			}
+			finally {
+				ArrayPool<byte>.Shared.Return(Buffer);
+			}
+		}
+	}
+
+	private static partial PipeOptions MkPipeOptions(i64? PipeBufferSizeBytes) {
+		var PauseWriterThreshold = PipeBufferSizeBytes ?? DefaultPipeBufferSizeBytes;
+		if (PauseWriterThreshold <= 0) {
+			throw new ArgumentOutOfRangeException(nameof(PipeBufferSizeBytes), "Pipe buffer size must be greater than zero.");
+		}
+		// Resume below the pause threshold so a reader frees a meaningful amount before waking the writer again.
+		var ResumeWriterThreshold = Math.Max(1, PauseWriterThreshold / 2);
+		return new(pauseWriterThreshold: PauseWriterThreshold, resumeWriterThreshold: ResumeWriterThreshold);
 	}
 
 	private async partial Task CompletePipes(Exception? Error) {

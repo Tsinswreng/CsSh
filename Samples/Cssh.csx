@@ -86,15 +86,15 @@ await using (var History = TryCmd("git", ["log", "-1", "--oneline"], Ct)) {
 	await History.Done;
 }
 
-// Read 回傳 Content，既可直接作 CommandOptions.Input，也可隱式取出普通 Stream。
-await using (Content Input = await Read("input/message.txt", Ct)) {
-	await using var Hash = Cmd("git", ["hash-object", "--stdin"], new CommandOptions(Input), Ct);
+// Read 回傳 Content，既可直接作 CommandOptions.Stdin，也可隱式取出普通 Stream。
+await using (Content Stdin = await Read("input/message.txt", Ct)) {
+	await using var Hash = Cmd("git", ["hash-object", "--stdin"], new CommandOptions(Stdin), Ct);
 	await Hash.Out(Ct);
 }
 
-// 命令管道不解析 |：下游命令的 Input 直接指向上游 Command 的 stdout Content。
+// 命令管道不解析 |：下游命令的 Stdin 直接指向上游 Command 的 stdout Content。
 await using var Log = Cmd("git", ["log", "--oneline"], Ct);
-await using var LogHash = Cmd("git", ["hash-object", "--stdin"], new(Log.Result.Stdout), Ct);
+await using var LogHash = Cmd("git", ["hash-object", "--stdin"], new(Stdin: Log.Result.Stdout), Ct);
 await Task.WhenAll(
 	Write(Stdout, LogHash.Result.Stdout, Ct),
 	Write(Stderr, Log.Result.Stderr, Ct),
