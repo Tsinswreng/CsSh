@@ -12,14 +12,15 @@ on:
 # `permissions` 設定工作流自動取得的 GITHUB_TOKEN 權限。
 permissions:
   contents: write
+  # NuGet/login 需要此權限向 GitHub 取得 OIDC token，再交換一次性 NuGet API key。
+  id-token: write
 
 # `jobs` 是所有要執行的 job 的映射表。
 jobs:
   # `release` 是 job 的識別鍵；整個「測試→打包→NuGet→GitHub Release」流程只在這裡執行一次。
   release:
     runs-on: ubuntu-latest
-    # `environment` 將 job 綁定到名為 nuget 的 GitHub Environment。
-    # 該 Environment 提供 NUGET_API_KEY Secret，也可以配置 required reviewers 審批發布。
+    # `environment` 將 job 綁定到 NuGet Trusted Publishing policy 所指定的 GitHub Environment。
     environment: nuget
     steps:
       # `fetch-depth: 0` 取消淺層 checkout，取得完整 Git 歷史與 tags。
@@ -34,11 +35,18 @@ jobs:
         with:
           dotnet-version: 10.0.x
 
-      # Scripts 先執行測試；測試失敗時不會執行打包、推送或建立 Release。
-      # `env` 將 Secret 只注入此 step；NUGET_API_KEY 用於 NuGet，GH_TOKEN 用於 GitHub Release。
+      # 依 Trusted Publishing policy 用 GitHub OIDC token 交換一次性 NuGet API key。
+      - name: Log in to NuGet
+        id: nuget-login
+        uses: NuGet/login@v1
+        with:
+          user: Tsinswreng
+
+      # Scripts 先執行 NativeAOT 測試；測試失敗時不會執行打包、推送或建立 Release。
+      # NUGET_API_KEY 是本次 workflow 臨時取得的一次性 key，並非 GitHub Secret。
       - name: Run CsSh release script
         env:
-          NUGET_API_KEY: ${{ secrets.NUGET_API_KEY }}
+          NUGET_API_KEY: ${{ steps.nuget-login.outputs.NUGET_API_KEY }}
           GH_TOKEN: ${{ github.token }}
         run: dotnet run --project proj/Tsinswreng.CsSh.Scripts/Tsinswreng.CsSh.Scripts.csproj --configuration Release -- Release
 

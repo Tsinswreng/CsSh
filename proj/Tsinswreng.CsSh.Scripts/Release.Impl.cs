@@ -27,12 +27,14 @@ internal static partial class Release{
 		await PublishGitHubRelease(Tag, Packages, Ct);
 	}
 
-	/// 執行還原、Release 建置及測試；命令非零退出時 CsSh 會拋例外並阻止發布。
+	/// 以 NativeAOT 產物執行完整測試，再建立供打包使用的 Release 輸出；任一步失敗都阻止發布。
 	private static async partial Task<nil> Verify(str Root, CT Ct){
-		var TestProject = Root/"proj/Tsinswreng.CsSh.Test/Tsinswreng.CsSh.Test.csproj";
-		await Exe("dotnet", ["restore", TestProject], Ct);
-		await Exe("dotnet", ["build", TestProject, "--configuration", "Release", "--no-restore"], Ct);
-		await Exe("dotnet", ["run", "--project", TestProject, "--configuration", "Release", "--no-build", "--no-restore"], Ct);
+		// step 1: NativeAOT publish 並執行原生測試 executable，CI/CD 的測試以此結果為準。
+		await TestAot.Main(Root, Ct);
+
+		// step 2: AOT 測試成功後建立 Release 輸出，Pack 階段因此可以使用 --no-build。
+		var PackageProject = Root/"proj/Tsinswreng.CsSh/Tsinswreng.CsSh.csproj";
+		await Exe("dotnet", ["build", PackageProject, "--configuration", "Release", "--no-restore"], Ct);
 		return NIL;
 	}
 

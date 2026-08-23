@@ -35,7 +35,7 @@ jobs:
         with:
           dotnet-version: 10.0.x
 
-      # Scripts 程序是構建邏輯的唯一入口：它先還原、Release 編譯並執行測試。
+      # Scripts 程序是構建邏輯的唯一入口：它先發布並執行 NativeAOT 測試，再建立 Release 編譯輸出。
       # 命令失敗會以非零退出碼結束，因此 GitHub 不會把未通過測試的 commit 視為驗證成功。
       - name: Run CsSh scripts
         run: dotnet run --project proj/Tsinswreng.CsSh.Scripts/Tsinswreng.CsSh.Scripts.csproj --configuration Release -- Release

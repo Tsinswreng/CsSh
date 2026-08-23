@@ -1,22 +1,16 @@
 namespace Tsinswreng.CsSh.Scripts;
 
 using System.Runtime.CompilerServices;
+using Tsinswreng.CsSh;
+using static Tsinswreng.CsSh.ShGlobal;
 
 /// CsSh 維護腳本的命令列入口。
 /// 第一個引數選擇具體腳本；腳本本身負責完整的一次性流程。
 internal static partial class Program{
-	/// 將命令列入口分派至具名腳本，Ctrl+C 會透過同一取消令牌中止外部命令。
+	/// 將命令列入口分派至具名腳本。
 	internal static async Task Main(str[] Args){
-		using var CtSource = new CancellationTokenSource();
-		Console.CancelKeyPress += (_, Event) => {
-			Event.Cancel = true;
-			CtSource.Cancel();
-		};
-
-		var Ct = CtSource.Token;
-		var CallerDir = System.IO.Path.GetDirectoryName(OwnPath())!;
-		// Program.cs is at <root>/proj/Tsinswreng.CsSh.Scripts; resolve from the source path, never from cwd.
-		var Root = System.IO.Path.GetFullPath(System.IO.Path.Combine(CallerDir, "../..")) + System.IO.Path.DirectorySeparatorChar;
+		var Ct = default(CT);
+		var Root = FullPath(DirName(OwnPath())/"../..");
 
 		if(Args.Length == 0){
 			PrintUsage();
@@ -41,7 +35,7 @@ internal static partial class Program{
 		Console.Error.WriteLine("Entries: Release, TestAot");
 	}
 
-	/// 讓編譯器把這個 dispatcher 原始檔路徑填入；CLR 的 Main 本身不會填 CallerFilePath。
+	/// 讓編譯器提供腳本源文件路徑，故腳本不依賴啟動時的當前目錄。
 	private static str OwnPath([CallerFilePath] str CallerPath = ""){
 		return CallerPath;
 	}
