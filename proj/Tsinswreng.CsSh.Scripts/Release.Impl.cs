@@ -68,7 +68,8 @@ internal static partial class Release{
 			throw new InvalidOperationException("NUGET_API_KEY is required for a tagged release.");
 		}
 		const str NuGetSource = "https://api.nuget.org/v3/index.json";
-		foreach(var Package in Packages){
+		// NuGet 要求主套件先存在，符號套件才能與同版本主套件關聯。
+		foreach(var Package in Packages.OrderBy(Package => Package.ToString().EndsWith(".snupkg", StringComparison.OrdinalIgnoreCase))){
 			await Exe("dotnet", ["nuget", "push", Package, "--source", NuGetSource, "--api-key", ApiKey, "--skip-duplicate"], Ct);
 		}
 		return NIL;
