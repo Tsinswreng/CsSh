@@ -1,4 +1,4 @@
-#r "nuget: Tsinswreng.CsSh, 0.2.0-alpha"
+#r "nuget: Tsinswreng.CsSh, 0.3.0-alpha"
 #nullable enable
 using Tsinswreng.CsSh;
 using static Tsinswreng.CsSh.ShGlobal;
